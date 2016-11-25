@@ -1,47 +1,63 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Planes>
-  <Plane ID="0">
+  <Plane>
     <PoolSize>200</PoolSize>
-    <Name>Smallest</Name>
+    <Name>Small</Name>
     <Shape>╟█╢</Shape>
-    <Color R="255" G="255" B="255" />
+    <Color>
+      <R>255</R>
+      <G>255</G>
+      <B>255</B>
+    </Color>
     <HP>25</HP>
-    <Speed>20</Speed>
+    <Speed>10</Speed>
     <Armor>0</Armor>
   </Plane>
-  <Plane ID="1">
+  <Plane>
     <PoolSize>100</PoolSize>
     <Name>Normal</Name>
     <Shape>  ▵
 ◥█◤
   ▼</Shape>
-    <Color R="255" G="255" B="255" />
+    <Color>
+      <R>255</R>
+      <G>255</G>
+      <B>255</B>
+    </Color>
     <HP>50</HP>
     <Speed>20</Speed>
     <Armor>0</Armor>
   </Plane>
-  <Plane ID="2">
+  <Plane>
     <PoolSize>30</PoolSize>
     <Name>Big</Name>
     <Shape>  ▵  ▵
 ◥███◤
   ╚█╝
     ▼</Shape>
-    <Color R="255" G="255" B="255" />
+    <Color>
+      <R>255</R>
+      <G>255</G>
+      <B>255</B>
+    </Color>
     <HP>100</HP>
-    <Speed>20</Speed>
-    <Armor>0</Armor>
+    <Speed>10</Speed>
+    <Armor>0.5</Armor>
   </Plane>
-  <Plane ID="3">
+  <Plane>
     <PoolSize>10</PoolSize>
     <Name>Super</Name>
     <Shape>▵▵▵
 ┠█┨
 ┠█┨
   ▼</Shape>
-    <Color R="255" G="0" B="0" />
+    <Color>
+      <R>255</R>
+      <G>0</G>
+      <B>0</B>
+    </Color>
     <HP>150</HP>
-    <Speed>20</Speed>
-    <Armor>0</Armor>
+    <Speed>30</Speed>
+    <Armor>0.25</Armor>
   </Plane>
 </Planes>

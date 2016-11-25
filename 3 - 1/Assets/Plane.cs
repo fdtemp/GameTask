@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 
 public class PlaneSettings {
-    public int _ID;
     public int _PoolSize;
     public string Name;
     public string Shape;

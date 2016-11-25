@@ -62,7 +62,7 @@ abstract class Weapon {
         public override bool LockTarget(List<Plane> Planes) {
             LastTime = Time.time;
             Vector3 CenterPos = ScreenPosotionTranslate(Input.mousePosition);
-            Target = GetTheNearestPlane(CenterPos, Planes, 15f);
+            Target = GetTheNearestPlane(CenterPos, Planes, 10f);
             if (Target == null) return false;
             return true;
         }
@@ -138,7 +138,7 @@ abstract class Weapon {
             StateTime += 0.1f;
             Vector3 CenterPos = ScreenPosotionTranslate(Input.mousePosition);
             foreach(var plane in Planes)
-                if ((plane.Entity.transform.localPosition-CenterPos).magnitude < 45f) {
+                if ((plane.Entity.transform.localPosition-CenterPos).magnitude < 30f) {
                     bool exist = false;
                     for(int i= 0; i < Target.Count; i++)
                         if (plane == Target[i]) {

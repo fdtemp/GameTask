@@ -4,12 +4,24 @@ using System.Xml.Linq;
 using UnityEngine;
 
 public abstract class Event {
+    public const int WAITING = 0;
+    public const int STARTED = 1;
+    public const int FINISH = 2;
+    public int State;
     public float BeginTime;
     public float EndTime;
-    abstract public void Init(XElement XMLData);
     virtual public void Begin() { }
     virtual public void Update() { }
     virtual public void End() { }
+
+    public delegate Event InitFunc(XElement d);
+    public static Dictionary<string, InitFunc> Dic = new Dictionary<string, InitFunc>();
+
+    public static void Init() {
+        Dic.Clear();
+        Dic.Add("SingleEnemyAppear", SingleEnemyAppear.Init);
+        Dic.Add("RandomEnemyAppear", RandomEnemyAppear.Init);
+    }
 
     public class SingleEnemyAppear : Event {
         private Vector3 Position;
@@ -19,21 +31,35 @@ public abstract class Event {
 
         private Plane Plane;
 
-        public override void Init(XElement d) {
-            PlaneKind = d.Element("PlaneKind").Value;
-            Position = XML.LoadVector3(d.Element("Position"));
+        public static Event Init(XElement d) {
+            SingleEnemyAppear e = new SingleEnemyAppear();
 
-            BeginTime = (d.Element("BeginTime") == null) ? 0
+            e.PlaneKind = d.Element("PlaneKind").Value;
+            e.Position = XML.LoadVector3(d.Element("Position"));
+
+            e.BeginTime = (d.Element("BeginTime") == null) ? 0
                 : float.Parse(d.Element("BeginTime").Value);
-            EndTime = ((d.Element("Span") == null) ? 0
-                : float.Parse(d.Element("Span").Value)) + BeginTime;
-            Unbeatable = (d.Element("Unbeatable") == null) ? false
-                : (int.Parse(d.Element("Unbeatable").Value) != 0);
-            Disappear = (d.Element("Disappear") == null) ? false
-                : (int.Parse(d.Element("Disappear").Value) != 0);
+            e.EndTime = ((d.Element("Span") == null) ? 0
+                : float.Parse(d.Element("Span").Value)) + e.BeginTime;
+            e.Unbeatable = (d.Element("Unbeatable") == null) ? false
+                : bool.Parse(d.Element("Unbeatable").Value);
+            e.Disappear = (d.Element("Disappear") == null) ? false
+                : bool.Parse(d.Element("Disappear").Value);
+
+            return e;
+        }
+        public static XElement toXML(string PlaneKind, Vector3 Position, float BeginTime, float Span, bool Unbeatable, bool Disappear) {
+            XElement x = new XElement("Event", new XAttribute("Kind", "SingleEnemyAppear"));
+            x.Add(new XElement("PlaneKind", PlaneKind));
+            x.Add(XML.SaveVector3("Position",Position));
+            x.Add(new XElement("BeginTime", BeginTime));
+            x.Add(new XElement("Span", Span));
+            x.Add(new XElement("Unbeatable", Unbeatable));
+            x.Add(new XElement("Disappear", Disappear));
+            return x;
         }
         public override void Begin() {
-            Plane = Game.Fac[Game.Dic[PlaneKind]].Create();
+            Plane = Game.Fac[PlaneKind].Create();
             Plane.Entity.transform.localPosition = Position;
             if (!Unbeatable) Game.Planes.Add(Plane);
         }
@@ -60,20 +86,36 @@ public abstract class Event {
         private System.Random Seed;
         private PlaneFactory Fac;
 
-        public override void Init(XElement d) {
-            PlaneKind = d.Element("PlaneKind").Value;
-            Origin = XML.LoadVector3(d.Element("Origin"));
-            Size = XML.LoadVector3(d.Element("Size"));
-            GenerateAmount = int.Parse(d.Element("GenerateAmount").Value);
+        public static Event Init(XElement d) {
+            RandomEnemyAppear e = new RandomEnemyAppear();
 
-            BeginTime = (d.Element("BeginTime") == null) ? 0
+            e.PlaneKind = d.Element("PlaneKind").Value;
+            e.Origin = XML.LoadVector3(d.Element("Origin"));
+            e.Size = XML.LoadVector3(d.Element("Size"));
+            e.GenerateAmount = int.Parse(d.Element("GenerateAmount").Value);
+
+            e.BeginTime = (d.Element("BeginTime") == null) ? 0
                 : float.Parse(d.Element("BeginTime").Value);
-            EndTime = ((d.Element("Span") == null) ? 0
-                : float.Parse(d.Element("Span").Value)) + BeginTime;
-            Unbeatable = (d.Element("Unbeatable") == null) ? false
-                : (int.Parse(d.Element("Unbeatable").Value) != 0);
-            Disappear = (d.Element("Disappear") == null) ? false
-                : (int.Parse(d.Element("Disappear").Value) != 0);
+            e.EndTime = ((d.Element("Span") == null) ? 0
+                : float.Parse(d.Element("Span").Value)) + e.BeginTime;
+            e.Unbeatable = (d.Element("Unbeatable") == null) ? false
+                : bool.Parse(d.Element("Unbeatable").Value);
+            e.Disappear = (d.Element("Disappear") == null) ? false
+                : bool.Parse(d.Element("Disappear").Value);
+
+            return e;
+        }
+        public static XElement toXML(string PlaneKind, Vector3 Origin, Vector3 Size, float GenerateAmount, float BeginTime, float Span, bool Unbeatable, bool Disappear) {
+            XElement x = new XElement("Event", new XAttribute("Kind", "RandomEnemyAppear"));
+            x.Add(new XElement("PlaneKind", PlaneKind));
+            x.Add(XML.SaveVector3("Origin", Origin));
+            x.Add(XML.SaveVector3("Size", Size));
+            x.Add(new XElement("GenerateAmount", GenerateAmount));
+            x.Add(new XElement("BeginTime", BeginTime));
+            x.Add(new XElement("Span", Span));
+            x.Add(new XElement("Unbeatable", Unbeatable));
+            x.Add(new XElement("Disappear", Disappear));
+            return x;
         }
         private Vector3 GetRandomPosition() {
             return new Vector3(
@@ -84,7 +126,7 @@ public abstract class Event {
         }
         public override void Begin() {
             Plane = new List<Plane>();
-            Fac = Game.Fac[Game.Dic[PlaneKind]];
+            Fac = Game.Fac[PlaneKind];
             Seed = new System.Random();
 
             Plane.Add(Fac.Create());

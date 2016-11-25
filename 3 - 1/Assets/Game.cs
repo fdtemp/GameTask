@@ -8,9 +8,9 @@ public class Game : MonoBehaviour {
     public static Vector3 ScreenSize = new Vector3(200, 150);
     public static GameObject PlanePrefab, TowerPrefab, LaserPrefab, EMPLockingPrefab;
     public static List<Plane> Planes;
+    public static List<Event> Events;
     public static Tower Tower;
-    public static Dictionary<string, int> Dic;
-    public static PlaneFactory[] Fac;
+    public static Dictionary<string, PlaneFactory> Fac;
 
     private float StartTime;
     private static bool Stopped = false;
@@ -23,14 +23,20 @@ public class Game : MonoBehaviour {
         Planes = new List<Plane>();
         Tower = new Tower();
         StartTime = Time.time;
-
-        List<PlaneSettings> lis = XML.LoadPlaneXML(XDocument.Load("s.xml"));
-        Dic = new Dictionary<string, int>();
-        Fac = new PlaneFactory[lis.Count];
-        for (int i = 0; i < lis.Count; i++) {
-            Dic.Add(lis[i].Name, lis[i]._ID);
-            Fac[i] = new PlaneFactory(lis[i]);
-        }
+        XDocument px = XML.GeneratePlaneXML(XML.GetBasicPlaneSettings());
+        XDocument ex = XML.GenerateEventXML(XML.GetEventEles());
+        px.Save("Planes.xml");
+        ex.Save("Events.xml");
+        //load plane data
+        List<PlaneSettings> lisp = XML.LoadPlaneXML(XDocument.Load("Planes.xml"));
+        Fac = new Dictionary<string, PlaneFactory>();
+        for (int i = 0; i < lisp.Count; i++)
+            Fac.Add(lisp[i].Name, new PlaneFactory(lisp[i]));
+        //load event data
+        Event.Init();
+        Events = XML.LoadEventXML(XDocument.Load("Events.xml"));
+        for (int i = 0; i < Events.Count; i++)
+            Events[i].State = Event.WAITING;
     }
 	void LateUpdate () {
         Planes.RemoveAll(delegate(Plane p) {
@@ -41,6 +47,25 @@ public class Game : MonoBehaviour {
             return false;
         });
         if (Stopped) return;
+
+        for(int i = 0; i < Events.Count; i++) {
+            Event e = Events[i];
+            if (e.BeginTime < Time.time )
+                switch (e.State) {
+                case Event.WAITING:
+                    e.Begin();
+                    e.State = Event.STARTED;
+                    break;
+                case Event.STARTED:
+                    if (Time.time < e.EndTime) {
+                        e.Update();
+                    } else {
+                        e.End();
+                        e.State = Event.FINISH;
+                    }
+                    break;
+                }
+        }
 
         if (Time.time - StartTime > 40)
             TowerWin();

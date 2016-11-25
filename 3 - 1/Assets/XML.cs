@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Xml.Linq;
 
 class XML {
-
     public static Vector3 LoadVector3(XElement d) {
         return new Vector3(
             float.Parse(d.Element("X").Value),
@@ -19,7 +18,6 @@ class XML {
                 new XElement("Z", d.z)
             );
     }
-
     public static Color LoadColor(XElement d) {
         return new Color(
             float.Parse(d.Element("R").Value),
@@ -35,14 +33,13 @@ class XML {
                 new XElement("B", d.b)
             );
     }
-
     public static XDocument GeneratePlaneXML(List<PlaneSettings> settings) {
         XDocument XML = new XDocument(new XElement("Planes"));
         XElement root = XML.Root;
         for (int i = 0; i < settings.Count; i++) {
             PlaneSettings s = settings[i];
             root.Add(
-                new XElement("Plane", new XAttribute("ID", i),
+                new XElement("Plane",
                     new XElement("PoolSize", s._PoolSize),
                     new XElement("Name", s.Name),
                     new XElement("Shape", s.Shape),
@@ -59,7 +56,6 @@ class XML {
         List<PlaneSettings> lis = new List<PlaneSettings>();
         foreach (var p in root.Elements("Plane")) {
             lis.Add(new PlaneSettings {
-                _ID = int.Parse(p.Attribute("ID").Value),
                 _PoolSize = int.Parse(p.Element("PoolSize").Value),
                 Name = p.Element("Name").Value,
                 Shape = p.Element("Shape").Value,
@@ -76,11 +72,11 @@ class XML {
         return new List<PlaneSettings> {
             new PlaneSettings {
                 _PoolSize = 200,
-                Name = "Smallest",
+                Name = "Small",
                 Shape = "╟█╢",
                 Color = new Color(255, 255, 255),
                 HP = 25,
-                Speed = 20,
+                Speed = 10,
                 Armor = 0,
             },
             new PlaneSettings {
@@ -98,7 +94,7 @@ class XML {
                 Shape = "  ▵  ▵" + endl + "◥███◤" + endl + "  ╚█╝" + endl + "    ▼",
                 Color = new Color(255, 255, 255),
                 HP = 100,
-                Speed = 20,
+                Speed = 10,
                 Armor = 0.5f,
             },
             new PlaneSettings {
@@ -107,9 +103,45 @@ class XML {
                 Shape = "▵▵▵" + endl + "┠█┨" + endl + "┠█┨" + endl + "  ▼",
                 Color = new Color(255, 0, 0),
                 HP = 150,
-                Speed = 20,
+                Speed = 30,
                 Armor = 0.25f,
             }
+        };
+    }
+    public static List<Event> LoadEventXML(XDocument XML) {
+        XElement root = XML.Root;
+        List<Event> lis = new List<Event>();
+        foreach(var e in root.Elements("Event"))
+            lis.Add(Event.Dic[e.Attribute("Kind").Value](e));
+        return lis;
+    }
+    public static XDocument GenerateEventXML(List<XElement> Eles) {
+        XDocument XML = new XDocument(new XElement("Events"));
+        XElement root = XML.Root;
+        for (int i = 0; i < Eles.Count; i++) {
+            root.Add(Eles[i]);
+        }
+        return XML;
+    }
+    public static List<XElement> GetEventEles() {
+        return new List<XElement> {
+            Event.RandomEnemyAppear.toXML(
+                "Small",
+                new Vector3(-80,100),
+                new Vector3(160,0),
+                3000,0,300,false,false
+            ),
+            Event.RandomEnemyAppear.toXML(
+                "Big",
+                new Vector3(-80,100),
+                new Vector3(160,0),
+                100,0,300,false,false
+            ),
+            Event.SingleEnemyAppear.toXML(
+                "Super",
+                new Vector3(0,100),
+                10,0,false,false
+            ),
         };
     }
 }
