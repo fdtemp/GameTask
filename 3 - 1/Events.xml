@@ -12,7 +12,25 @@
       <Y>0</Y>
       <Z>0</Z>
     </Size>
-    <GenerateAmount>3000</GenerateAmount>
+    <GenerateAmount>2000</GenerateAmount>
+    <BeginTime>0</BeginTime>
+    <Span>300</Span>
+    <Unbeatable>false</Unbeatable>
+    <Disappear>false</Disappear>
+  </Event>
+  <Event Kind="RandomEnemyAppear">
+    <PlaneKind>Normal</PlaneKind>
+    <Origin>
+      <X>-80</X>
+      <Y>100</Y>
+      <Z>0</Z>
+    </Origin>
+    <Size>
+      <X>160</X>
+      <Y>0</Y>
+      <Z>0</Z>
+    </Size>
+    <GenerateAmount>200</GenerateAmount>
     <BeginTime>0</BeginTime>
     <Span>300</Span>
     <Unbeatable>false</Unbeatable>
@@ -30,9 +48,21 @@
       <Y>0</Y>
       <Z>0</Z>
     </Size>
-    <GenerateAmount>100</GenerateAmount>
+    <GenerateAmount>50</GenerateAmount>
     <BeginTime>0</BeginTime>
     <Span>300</Span>
+    <Unbeatable>false</Unbeatable>
+    <Disappear>false</Disappear>
+  </Event>
+  <Event Kind="SingleEnemyAppear">
+    <PlaneKind>Super</PlaneKind>
+    <Position>
+      <X>-50</X>
+      <Y>100</Y>
+      <Z>0</Z>
+    </Position>
+    <BeginTime>20</BeginTime>
+    <Span>0</Span>
     <Unbeatable>false</Unbeatable>
     <Disappear>false</Disappear>
   </Event>
@@ -43,7 +73,19 @@
       <Y>100</Y>
       <Z>0</Z>
     </Position>
-    <BeginTime>10</BeginTime>
+    <BeginTime>20</BeginTime>
+    <Span>0</Span>
+    <Unbeatable>false</Unbeatable>
+    <Disappear>false</Disappear>
+  </Event>
+  <Event Kind="SingleEnemyAppear">
+    <PlaneKind>Super</PlaneKind>
+    <Position>
+      <X>50</X>
+      <Y>100</Y>
+      <Z>0</Z>
+    </Position>
+    <BeginTime>20</BeginTime>
     <Span>0</Span>
     <Unbeatable>false</Unbeatable>
     <Disappear>false</Disappear>

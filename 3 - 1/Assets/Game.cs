@@ -23,10 +23,11 @@ public class Game : MonoBehaviour {
         Planes = new List<Plane>();
         Tower = new Tower();
         StartTime = Time.time;
-        XDocument px = XML.GeneratePlaneXML(XML.GetBasicPlaneSettings());
-        XDocument ex = XML.GenerateEventXML(XML.GetEventEles());
-        px.Save("Planes.xml");
-        ex.Save("Events.xml");
+        //(generate & save) (plane & event) data
+        //XDocument px = XML.GeneratePlaneXML(XML.GetBasicPlaneSettings());
+        //XDocument ex = XML.GenerateEventXML(XML.GetEventEles());
+        //px.Save("Planes.xml");
+        //ex.Save("Events.xml");
         //load plane data
         List<PlaneSettings> lisp = XML.LoadPlaneXML(XDocument.Load("Planes.xml"));
         Fac = new Dictionary<string, PlaneFactory>();

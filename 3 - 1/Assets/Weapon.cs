@@ -32,16 +32,21 @@ abstract class Weapon {
         private float Interval;
         private float LastTime;
         private Plane Target;
+        private List<Plane> ReflectTarget;
+        private System.Random Seed;
         public static ObjectPool<GameObject> Pool;
         public Laser(float _Damage, Vector3 _Origin, float _Interval) {
             Damage = _Damage;
             Origin = _Origin;
             Interval = _Interval;
             LastTime = Time.time - Interval;
+            ReflectTarget = new List<Plane>();
+            Seed = new System.Random();
             Pool = new ObjectPool<GameObject>(
-                (int)(3f / Interval) + 1,
+                6 * ((int)(1 / Interval) + 1),
                 delegate (GameObject l) {
                     l.SetActive(true);
+                    l.GetComponent<LaserScript>().StartTime = Time.time;
                     return true;
                 },
                 delegate (GameObject l) {
@@ -63,7 +68,19 @@ abstract class Weapon {
             LastTime = Time.time;
             Vector3 CenterPos = ScreenPosotionTranslate(Input.mousePosition);
             Target = GetTheNearestPlane(CenterPos, Planes, 10f);
+            Plane t;
             if (Target == null) return false;
+            for (int i = 0; i < 5; i++) {
+                t = GetTheNearestPlane(
+                    new Vector3(
+                        CenterPos.x - 25 + 50 * (float)Seed.NextDouble(),
+                        CenterPos.y - 25 + 50 * (float)Seed.NextDouble()
+                    ),
+                    Planes, 10
+                );
+                if (t != Target && t != null)
+                    ReflectTarget.Add(t);
+            }
             return true;
         }
         public override void Fire() {
@@ -72,16 +89,28 @@ abstract class Weapon {
             if (Pool.Count != 0) l = Pool.Get();
             else l = GameObject.Instantiate<GameObject>(Game.LaserPrefab);
             LineRenderer lr = l.GetComponent<LineRenderer>();
-            Vector3 pos = Target.Entity.transform.localPosition;
             lr.SetVertexCount(2);
+            lr.SetWidth(1, 1);
             lr.SetPosition(0, Origin);
-            lr.SetPosition(1, pos);
+            lr.SetPosition(1, Target.Entity.transform.localPosition);
+            for (int i = 0; i < ReflectTarget.Count; i++) {
+                ReflectTarget[i].Damage(Damage/3);
+                if (Pool.Count != 0) l = Pool.Get();
+                else l = GameObject.Instantiate<GameObject>(Game.LaserPrefab);
+                lr = l.GetComponent<LineRenderer>();
+                lr.SetVertexCount(2);
+                lr.SetWidth(0.3f, 0.3f);
+                lr.SetPosition(0, Target.Entity.transform.localPosition);
+                lr.SetPosition(1, ReflectTarget[i].Entity.transform.localPosition);
+            }
+            ReflectTarget.Clear();
         }
     }
     public class EMP : Weapon {
         private const int WAITING = 0;
         private const int FINDING_TARGET = 1;
 
+        private KeyCode KeyCode;
         private float Damage;
         private float MaxTargetFindingTime;
         private float Interval;
@@ -92,7 +121,8 @@ abstract class Weapon {
         private float StateTime;
         private ObjectPool<GameObject> Pool;
         private List<GameObject> lis;
-        public EMP(float _Damage, float _MaxTargetFindingTime, float _Interval) {
+        public EMP(KeyCode _KeyCode, float _Damage, float _MaxTargetFindingTime, float _Interval) {
+            KeyCode = _KeyCode;
             Damage = _Damage;
             MaxTargetFindingTime = _MaxTargetFindingTime;
             Interval = _Interval;
@@ -118,8 +148,8 @@ abstract class Weapon {
         }
         public override bool CheckState() {
             if (Time.time - LastTime > Interval
-                && ((State == WAITING && Input.GetKeyDown(KeyCode.Z))
-                    || (State == FINDING_TARGET && (Input.GetKeyUp(KeyCode.Z) || Time.time > StateTime))))
+                && ((State == WAITING && Input.GetKeyDown(KeyCode))
+                    || (State == FINDING_TARGET && (Input.GetKeyUp(KeyCode) || Time.time > StateTime))))
                 return true;
             return false;
         }
@@ -135,7 +165,7 @@ abstract class Weapon {
                 lis.Clear();
                 return true;
             }
-            StateTime += 0.1f;
+            StateTime += 0.05f;
             Vector3 CenterPos = ScreenPosotionTranslate(Input.mousePosition);
             foreach(var plane in Planes)
                 if ((plane.Entity.transform.localPosition-CenterPos).magnitude < 30f) {
@@ -169,6 +199,7 @@ abstract class Weapon {
         private const int WAITING = 0;
         private const int FIRING = 1;
 
+        private KeyCode KeyCode;
         private float FrozenTime;
         private float TransTime;
         private float Rate;
@@ -178,7 +209,8 @@ abstract class Weapon {
         private int State;
         private float StartTime;
         private float StateTime;
-        public Frost(float _FrozenTime, float _TransTime, float _Rate, float _Interval) {
+        public Frost(KeyCode _KeyCode, float _FrozenTime, float _TransTime, float _Rate, float _Interval) {
+            KeyCode = _KeyCode;
             FrozenTime = _FrozenTime;
             TransTime = _TransTime;
             Rate = _Rate;
@@ -188,7 +220,7 @@ abstract class Weapon {
         }
         public override bool CheckState() {
             if (Time.time - LastTime > Interval
-                && ((State == WAITING && Input.GetKeyDown(KeyCode.X))
+                && ((State == WAITING && Input.GetKeyDown(KeyCode))
                     || (State == FIRING && Time.time > StateTime)))
                 return true;
             return false;

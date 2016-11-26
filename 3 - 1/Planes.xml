@@ -40,7 +40,7 @@
       <G>255</G>
       <B>255</B>
     </Color>
-    <HP>100</HP>
+    <HP>150</HP>
     <Speed>10</Speed>
     <Armor>0.5</Armor>
   </Plane>
@@ -58,6 +58,6 @@
     </Color>
     <HP>150</HP>
     <Speed>30</Speed>
-    <Armor>0.25</Armor>
+    <Armor>0</Armor>
   </Plane>
 </Planes>

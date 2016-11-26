@@ -7,8 +7,9 @@ public class TowerScript : MonoBehaviour {
 
     void Start() {
         Weapons = new Weapon[] {
-            new Weapon.Frost(4,0.5f,-0.5f,0),
-            new Weapon.EMP(50, 5, 0),
+            new Weapon.Frost(KeyCode.X, 5, 0.5f, -0.5f, 14),
+            new Weapon.EMP(KeyCode.C, 50, 3, 0),
+            new Weapon.EMP(KeyCode.Z, 50, 3, 7),
             new Weapon.Laser(50, new Vector3(0,-3), 0.1f),
         };
     }

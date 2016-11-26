@@ -93,7 +93,7 @@ class XML {
                 Name = "Big",
                 Shape = "  ▵  ▵" + endl + "◥███◤" + endl + "  ╚█╝" + endl + "    ▼",
                 Color = new Color(255, 255, 255),
-                HP = 100,
+                HP = 150,
                 Speed = 10,
                 Armor = 0.5f,
             },
@@ -104,7 +104,7 @@ class XML {
                 Color = new Color(255, 0, 0),
                 HP = 150,
                 Speed = 30,
-                Armor = 0.25f,
+                Armor = 0,
             }
         };
     }
@@ -129,18 +129,34 @@ class XML {
                 "Small",
                 new Vector3(-80,100),
                 new Vector3(160,0),
-                3000,0,300,false,false
+                2000,0,300,false,false
+            ),
+            Event.RandomEnemyAppear.toXML(
+                "Normal",
+                new Vector3(-80,100),
+                new Vector3(160,0),
+                200,0,300,false,false
             ),
             Event.RandomEnemyAppear.toXML(
                 "Big",
                 new Vector3(-80,100),
                 new Vector3(160,0),
-                100,0,300,false,false
+                50,0,300,false,false
+            ),
+            Event.SingleEnemyAppear.toXML(
+                "Super",
+                new Vector3(-50,100),
+                20,0,false,false
             ),
             Event.SingleEnemyAppear.toXML(
                 "Super",
                 new Vector3(0,100),
-                10,0,false,false
+                20,0,false,false
+            ),
+            Event.SingleEnemyAppear.toXML(
+                "Super",
+                new Vector3(50,100),
+                20,0,false,false
             ),
         };
     }
