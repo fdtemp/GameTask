@@ -1,77 +1,70 @@
 ﻿using UnityEngine;
 
-public interface PlayerState {
-    void Regist(Player player);
-    PlayerState TrySwift();
-    void Update();
-    void Unregist();
+abstract public class PlayerState {
+    public const int NONE = -1;
+    public const int WAITING = 0;
+    public const int MOVING = 1;
+    public const int FIRING = 2;
+    public const int HEALING = 3;
+    public Player Player;
+    abstract public int TrySwitch();
+    virtual public void Regist() { }
+    virtual public void Update() { }
+    virtual public void Unregist() { }
 }
 
 public class PlayerStateController {
+
     private Player Player;
-    public PlayerState CurrentState;
+    private PlayerState[] States;
+    public int Current;
     public PlayerStateController(Player player) {
         Player = player;
-        CurrentState = new PlayerStates.Waiting();
-        CurrentState.Regist(Player);
+        States = new PlayerState[4] {
+            new PlayerStates.Waiting(),
+            new PlayerStates.Moving(),
+            new PlayerStates.Firing(),
+            new PlayerStates.Healing(),
+        };
+        for (int i = 0; i < 4; i++)
+            States[i].Player = Player;
+        Current = PlayerState.WAITING;
+        States[Current].Regist();
     }
     public void Update() {
-        CurrentState = CurrentState.TrySwift();
-        CurrentState.Update();
+        int NewState = States[Current].TrySwitch();
+        if (NewState != PlayerState.NONE) {
+            States[Current].Unregist();
+            States[NewState].Regist();
+            Current = NewState;
+        }
+        States[Current].Update();
     }
 }
 
 namespace PlayerStates {
     public class Waiting : PlayerState {
-        private Player Player;
-        private float StartTime, LastHealTime;
-        public Moving moving;
-        public Healing healing;
-        public Firing firing;
-        public Waiting() {
-            if (moving == null) {
-                moving = new Moving();
-                moving.waiting = this;
-                moving._f();
-            }
-            if (healing == null) {
-                healing = new Healing();
-                healing.waiting = this;
-                healing._f();
-            }
-            if (firing == null) {
-                firing = new Firing();
-                firing.waiting = this;
-                firing._f();
-            }
-        }
+        private float StartTime;
+        private float LastHealTime;
 
-        public void Regist(Player player) {
+        public override void Regist() {
             Debug.Log("Player is waiting.");
-            Player = player;
             StartTime = Time.time;
             LastHealTime = StartTime + Player.WaitNoHealingTime - Player.WaitHealingInterval;
         }
-        public PlayerState TrySwift() {
-            PlayerState t = null;
+        public override int TrySwitch() {
             if (Input.GetMouseButtonDown(0))
-                t = firing;
+                return FIRING;
             else if (Input.GetKeyDown(KeyCode.Q))
-                t = healing;
+                return HEALING;
             else if (Input.GetKeyDown(KeyCode.A)
                 || Input.GetKeyDown(KeyCode.S)
                 || Input.GetKeyDown(KeyCode.D)
                 || Input.GetKeyDown(KeyCode.W))
-                t = moving;
-            if (t == null) {
-                return this;
-            } else {
-                Unregist();
-                t.Regist(Player);
-                return t;
-            }
+                return MOVING;
+            return NONE;
         }
-        public void Update() {
+        public override void Update() {
             if (Time.time > StartTime + Player.WaitNoHealingTime)
                 while (Time.time > LastHealTime + Player.WaitHealingInterval) {
                     Player.HPChange(Player.WaitHealingHPGain);
@@ -79,42 +72,23 @@ namespace PlayerStates {
                     LastHealTime += Player.WaitHealingInterval;
                 }
         }
-        public void Unregist() { }
     }
     public class Moving : PlayerState {
-        private Player Player;
-        public Waiting waiting;
-        public Firing firing;
-        public void _f() {
-            if (firing == null) {
-                firing = new Firing();
-                firing.moving = this;
-                firing._f();
-            }
-        }
 
-        public void Regist(Player player) {
-            Debug.Log("Player is Moving.");
-            Player = player;
-        }
-        public PlayerState TrySwift() {
-            PlayerState t = null;
+        public override int TrySwitch() {
             if (Input.GetMouseButtonDown(0))
-                t = firing;
+                return FIRING;
             else if (!Input.GetKey(KeyCode.A)
                 && !Input.GetKey(KeyCode.S)
                 && !Input.GetKey(KeyCode.D)
                 && !Input.GetKey(KeyCode.W))
-                t = waiting;
-            if (t == null) {
-                return this;
-            } else {
-                Unregist();
-                t.Regist(Player);
-                return t;
-            }
+                return WAITING;
+            return NONE;
         }
-        public void Update() {
+        public override void Regist() {
+            Debug.Log("Player is Moving.");
+        }
+        public override void Update() {
             int xf = 0, yf = 0;
             if (Input.GetKey(KeyCode.A)) xf -= 1;
             if (Input.GetKey(KeyCode.S)) yf -= 1;
@@ -123,44 +97,25 @@ namespace PlayerStates {
             float DeltaLength = Time.deltaTime * Player.MoveSpeed;
             Player.SetPosition(Vector3.MoveTowards(Player.Position, new Vector3(100 * xf, 100 * yf), DeltaLength));
         }
-        public void Unregist() { }
     }
     public class Firing : PlayerState {
-        private Player Player;
         private float LastTime;
-        public Waiting waiting;
-        public Moving moving;
-        public void _f() {
-            if (moving == null) {
-                moving = new Moving();
-                moving.firing = this;
-                moving._f();
-            }
-        }
 
-        public void Regist(Player player) {
-            Debug.Log("Player is Firing.");
-            Player = player;
-            LastTime = Time.time;
-        }
-        public PlayerState TrySwift() {
-            PlayerState t = null;
+        public override int TrySwitch() {
             if (Input.GetKeyDown(KeyCode.A)
                 || Input.GetKeyDown(KeyCode.S)
                 || Input.GetKeyDown(KeyCode.D)
                 || Input.GetKeyDown(KeyCode.W))
-                t = moving;
+                return MOVING;
             else if (Time.time - LastTime > Player.GunInterval * 2 || Player.BulletAmount == 0)
-                t = waiting;
-            if (t == null) {
-                return this;
-            } else {
-                Unregist();
-                t.Regist(Player);
-                return t;
-            }
+                return WAITING;
+            return NONE;
         }
-        public void Update() {
+        public override void Regist() {
+            Debug.Log("Player is Firing.");
+            LastTime = Time.time;
+        }
+        public override void Update() {
             if (Player.BulletAmount > 0
                 && Time.time - LastTime > Player.GunInterval
                 && Input.GetMouseButton(0)) {
@@ -203,39 +158,27 @@ namespace PlayerStates {
                 }
                 if (target != null) {
                     Player.Shot(target);
-                    LastTime += Player.GunInterval;
-                }
+                    
+                }LastTime += Player.GunInterval;
             }
         }
-        public void Unregist() { }
     }
     public class Healing : PlayerState {
-        private Player Player;
         private float StartTime;
-        public Waiting waiting;
-        public void _f() { }
 
-        public void Regist(Player player) {
+        public override int TrySwitch() {
+            if (Time.time - StartTime > Player.HealPrepareTime || Input.GetKey(KeyCode.E))
+                return WAITING;
+            return NONE;
+        }
+        public override void Regist() {
             Debug.Log("Player is Healing.");
-            Player = player;
             StartTime = Time.time;
         }
-        public PlayerState TrySwift() {
-            PlayerState t = null;
-            if (Time.time - StartTime > Player.HealPrepareTime || Input.GetKey(KeyCode.E))
-                t = waiting;
-            if (t == null) {
-                return this;
-            } else {
-                Unregist();
-                t.Regist(Player);
-                return t;
-            }
+        public override void Update() {
+            Player.MPChange(-Player.HealMPCost * Time.deltaTime / Player.HealPrepareTime);
         }
-        public void Update() {
-            Player.MPChange(Player.HealMPCost * Time.deltaTime / Player.HealPrepareTime);
-        }
-        public void Unregist() {
+        public override void Unregist() {
             if (Time.time - StartTime > Player.HealPrepareTime)
                 Player.HPChange(Player.HealHPGain);
         }
