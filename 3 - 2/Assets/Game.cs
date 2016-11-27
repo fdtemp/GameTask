@@ -2,21 +2,31 @@
 using System.Collections.Generic;
 
 public class Game : MonoBehaviour {
-    public static Vector3 ScreenOrigin;
-    public static Vector3 ScreenSize;
+    public static Vector3 ScreenOrigin = new Vector3(-80,-60);
+    public static Vector3 ScreenSize = new Vector3(160,120);
 
+    public static GameObject PlayerPrefab, MonsterPrefab, HealthBoardPrefab;
+    public static GameObject Camera;
+    private static int ID = 0;
     public static List<Monster> Monsters;
     public static Player Player;
-    private PlayerStateController PlayerStateController;
+
+    public static int GetMonsterID() {
+        return System.Threading.Interlocked.Increment(ref ID);
+    }
 
 	void Start () {
+        PlayerPrefab = Resources.Load<GameObject>("Player");
+        MonsterPrefab = Resources.Load<GameObject>("Monster");
+        HealthBoardPrefab = Resources.Load<GameObject>("HealthBoard");
+        Camera = GameObject.Find("Camera");
         Monsters = new List<Monster>();
+        Monsters.Add(new Monster());
         Player = new Player();
-        PlayerStateController = new PlayerStateController(Player);
 	}
-	
-	// Update is called once per frame
 	void Update () {
-        PlayerStateController.Update();
+        Player.Update();
+        for (int i = 0; i < Monsters.Count; i++)
+            Monsters[i].Update();
 	}
 }

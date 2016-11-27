@@ -13,51 +13,20 @@ abstract public class PlayerState {
     virtual public void Unregist() { }
 }
 
-public class PlayerStateController {
-
-    private Player Player;
-    private PlayerState[] States;
-    public int Current;
-    public PlayerStateController(Player player) {
-        Player = player;
-        States = new PlayerState[4] {
-            new PlayerStates.Waiting(),
-            new PlayerStates.Moving(),
-            new PlayerStates.Firing(),
-            new PlayerStates.Healing(),
-        };
-        for (int i = 0; i < 4; i++)
-            States[i].Player = Player;
-        Current = PlayerState.WAITING;
-        States[Current].Regist();
-    }
-    public void Update() {
-        int NewState = States[Current].TrySwitch();
-        if (NewState != PlayerState.NONE) {
-            States[Current].Unregist();
-            States[NewState].Regist();
-            Current = NewState;
-        }
-        States[Current].Update();
-    }
-}
-
 namespace PlayerStates {
     public class Waiting : PlayerState {
         private float StartTime;
-        private float LastHealTime;
 
         public override void Regist() {
             Debug.Log("Player is waiting.");
             StartTime = Time.time;
-            LastHealTime = StartTime + Player.WaitNoHealingTime - Player.WaitHealingInterval;
         }
         public override int TrySwitch() {
             if (Input.GetMouseButtonDown(0))
                 return FIRING;
-            else if (Input.GetKeyDown(KeyCode.Q))
+            if (Input.GetKeyDown(KeyCode.Q))
                 return HEALING;
-            else if (Input.GetKeyDown(KeyCode.A)
+            if (Input.GetKeyDown(KeyCode.A)
                 || Input.GetKeyDown(KeyCode.S)
                 || Input.GetKeyDown(KeyCode.D)
                 || Input.GetKeyDown(KeyCode.W))
@@ -65,12 +34,10 @@ namespace PlayerStates {
             return NONE;
         }
         public override void Update() {
-            if (Time.time > StartTime + Player.WaitNoHealingTime)
-                while (Time.time > LastHealTime + Player.WaitHealingInterval) {
-                    Player.HPChange(Player.WaitHealingHPGain);
-                    Player.MPChange(Player.WaitHealingMPGain);
-                    LastHealTime += Player.WaitHealingInterval;
-                }
+            if (Time.time > StartTime + Player.WaitNoHealingTime) {
+                Player.HPChange(Time.deltaTime * Player.WaitHPHealingSpeed);
+                Player.MPChange(Time.deltaTime * Player.WaitMPHealingSpeed);
+            }
         }
     }
     public class Moving : PlayerState {
@@ -78,7 +45,7 @@ namespace PlayerStates {
         public override int TrySwitch() {
             if (Input.GetMouseButtonDown(0))
                 return FIRING;
-            else if (!Input.GetKey(KeyCode.A)
+            if (!Input.GetKey(KeyCode.A)
                 && !Input.GetKey(KeyCode.S)
                 && !Input.GetKey(KeyCode.D)
                 && !Input.GetKey(KeyCode.W))
@@ -94,8 +61,11 @@ namespace PlayerStates {
             if (Input.GetKey(KeyCode.S)) yf -= 1;
             if (Input.GetKey(KeyCode.D)) xf += 1;
             if (Input.GetKey(KeyCode.W)) yf += 1;
-            float DeltaLength = Time.deltaTime * Player.MoveSpeed;
-            Player.SetPosition(Vector3.MoveTowards(Player.Position, new Vector3(100 * xf, 100 * yf), DeltaLength));
+            Player.SetPosition(Vector3.MoveTowards(
+                Player.Position,
+                new Vector3(100 * xf, 100 * yf),
+                Time.deltaTime * Player.MoveSpeed)
+            );
         }
     }
     public class Firing : PlayerState {
@@ -107,13 +77,13 @@ namespace PlayerStates {
                 || Input.GetKeyDown(KeyCode.D)
                 || Input.GetKeyDown(KeyCode.W))
                 return MOVING;
-            else if (Time.time - LastTime > Player.GunInterval * 2 || Player.BulletAmount == 0)
+            if (Time.time - LastTime > Player.GunInterval * 2 || Player.BulletAmount == 0)
                 return WAITING;
             return NONE;
         }
         public override void Regist() {
             Debug.Log("Player is Firing.");
-            LastTime = Time.time;
+			LastTime = Time.time - Player.GunInterval;
         }
         public override void Update() {
             if (Player.BulletAmount > 0
@@ -121,8 +91,8 @@ namespace PlayerStates {
                 && Input.GetMouseButton(0)) {
                 Vector3
                     mousePos = new Vector3(
-                        Game.ScreenOrigin.x + (Input.mousePosition.x / Screen.width) * Game.ScreenSize.x,
-                        Game.ScreenOrigin.y + (Input.mousePosition.y / Screen.height) * Game.ScreenSize.y
+					    Game.Player.Position.x + Game.ScreenOrigin.x + (Input.mousePosition.x / Screen.width) * Game.ScreenSize.x,
+					    Game.Player.Position.y + Game.ScreenOrigin.y + (Input.mousePosition.y / Screen.height) * Game.ScreenSize.y
                     ),
                     endPos = Vector3.MoveTowards(Player.Position, mousePos, Player.GunRange);
                 float
@@ -145,7 +115,7 @@ namespace PlayerStates {
                         && Mathf.Min(b, d)-5 <= m.Position.y
                         && m.Position.y <= Mathf.Max(b, d)+5) {
                         float tdelta = Mathf.Abs(A * m.Position.x + B * m.Position.y + C)
-                                        / Mathf.Sqrt(A * A + B * B) - m.Range;
+                                        / Mathf.Sqrt(A * A + B * B) - m.BodyRange;
 
                         if ((delta >= 0 && tdelta < delta)
                             || (delta < 0 && tdis < dis)) {
@@ -156,10 +126,12 @@ namespace PlayerStates {
                         }
                     }
                 }
-                if (target != null) {
-                    Player.Shot(target);
-                    
-                }LastTime += Player.GunInterval;
+                if (target == null) {
+                    return;
+                } else {
+                    Player.Shoot(target);
+                    LastTime += Player.GunInterval;
+                }
             }
         }
     }
