@@ -16,33 +16,29 @@ abstract public class MonsterState {
 namespace MonsterStates {
     public class Waiting : MonsterState {
         public override int TrySwitch() {
-            if (Monster.HP < Monster.EscapingStartHPLimit
-                && Monster.Threat < Monster.AngryThreatLimit)
+            if (Monster.HP < Monster._Settings.EscapingStartHPLimit
+                && Monster.Threat < Monster._Settings.AngryThreatLimit)
                 return ESCAPING;
-            if ((Game.Player.Position - Monster.Position).magnitude < Monster.AlertRange
+            if ((Game.Player.Position - Monster.Position).magnitude < Monster._Settings.AlertRange
                 || Monster.Threat > 0.1)
                 return MOVING;
-            if ((Game.Player.Position - Monster.Position).magnitude < Monster.AttackRange)
+            if ((Game.Player.Position - Monster.Position).magnitude < Monster._Settings.AttackRange)
                 return ATTACKING;
             return NONE;
         }
         public override void Regist() {
             Debug.Log("Monster " + Monster.ID + " is waiting.");
         }
-        public override void Update() {
-            Monster.HPChange(Time.deltaTime * Monster.HPHealingSpeed);
-            Monster.MPChange(Time.deltaTime * Monster.MPHealingSpeed);
-        }
     }
     public class Moving : MonsterState {
         public override int TrySwitch() {
-            if (Monster.HP < Monster.EscapingStartHPLimit
-                && Monster.Threat < Monster.AngryThreatLimit)
+            if (Monster.HP < Monster._Settings.EscapingStartHPLimit
+                && Monster.Threat < Monster._Settings.AngryThreatLimit)
                 return ESCAPING;
-            if ((Game.Player.Position - Monster.Position).magnitude > Monster.AlertRange * 1.5f
+            if ((Game.Player.Position - Monster.Position).magnitude > Monster._Settings.AlertRange * 1.5f
                 && Monster.Threat < 0.1)
                 return WAITING;
-            if ((Game.Player.Position - Monster.Position).magnitude < Monster.AttackRange)
+            if ((Game.Player.Position - Monster.Position).magnitude < Monster._Settings.AttackRange)
                 return ATTACKING;
             return NONE;
         }
@@ -53,21 +49,20 @@ namespace MonsterStates {
             Monster.SetPosition(Vector3.MoveTowards(
                 Monster.Position,
                 Game.Player.Position,
-                Time.deltaTime * Monster.MoveSpeed)
+                Time.deltaTime * Monster._Settings.MoveSpeed)
             );
-            Monster.ThreatChange(-Time.deltaTime * Monster.ThreatDecreaseSpeed);
+            Monster.ThreatChange(-Time.deltaTime * Monster._Settings.ThreatDecreaseSpeed);
         }
     }
     public class Attacking : MonsterState {
         private float LastTime;
         public override int TrySwitch() {
-            if (Monster.HP < Monster.EscapingStartHPLimit
-                && Monster.Threat < Monster.AngryThreatLimit)
+            if (Monster.HP < Monster._Settings.EscapingStartHPLimit
+                && Monster.Threat < Monster._Settings.AngryThreatLimit)
                 return ESCAPING;
-            if ((
-                    (Game.Player.Position - Monster.Position).magnitude < Monster.AlertRange * 2
-                    && (Game.Player.Position - Monster.Position).magnitude > Monster.AttackRange
-                ) || Monster.Threat > 0.1)
+            if ((Game.Player.Position - Monster.Position).magnitude > Monster._Settings.AttackRange
+                && ((Game.Player.Position - Monster.Position).magnitude < Monster._Settings.AlertRange * 2
+                    || Monster.Threat > 0.1f))
                 return MOVING;
             return NONE;
         }
@@ -76,15 +71,15 @@ namespace MonsterStates {
             LastTime = Time.time;
         }
         public override void Update() {
-            while (Time.time - LastTime > Monster.AttackInterval) {
+            while (Time.time - LastTime > Monster._Settings.AttackInterval) {
                 Monster.Attack();
-                LastTime += Monster.AttackInterval;
+                LastTime += Monster._Settings.AttackInterval;
             }
         }
     }
     public class Escaping : MonsterState {
         public override int TrySwitch() {
-            if (Monster.HP > Monster.EscapingEndHPLimit)
+            if (Monster.HP > Monster._Settings.EscapingEndHPLimit)
                 return WAITING;
             return NONE;
         }
@@ -95,11 +90,8 @@ namespace MonsterStates {
             Monster.SetPosition(Vector3.MoveTowards(
                 Monster.Position,
                 Monster.Position + 100 * (Monster.Position - Game.Player.Position),
-                Time.deltaTime * Monster.MoveSpeed)
+                Time.deltaTime * Monster._Settings.MoveSpeed)
             );
-            Monster.ThreatChange(-Time.deltaTime * Monster.ThreatDecreaseSpeed);
-            Monster.HPChange(Time.deltaTime * (Monster.HPHealingSpeed + Monster.EscapingExtraHPHealingSpeed));
-            Monster.MPChange(Time.deltaTime * (Monster.MPHealingSpeed + Monster.EscapingExtraMPHealingSpeed));
         }
     }
 }

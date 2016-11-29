@@ -15,12 +15,6 @@ abstract public class PlayerState {
 
 namespace PlayerStates {
     public class Waiting : PlayerState {
-        private float StartTime;
-
-        public override void Regist() {
-            Debug.Log("Player is waiting.");
-            StartTime = Time.time;
-        }
         public override int TrySwitch() {
             if (Input.GetMouseButtonDown(0))
                 return FIRING;
@@ -33,15 +27,11 @@ namespace PlayerStates {
                 return MOVING;
             return NONE;
         }
-        public override void Update() {
-            if (Time.time > StartTime + Player.WaitNoHealingTime) {
-                Player.HPChange(Time.deltaTime * Player.WaitHPHealingSpeed);
-                Player.MPChange(Time.deltaTime * Player.WaitMPHealingSpeed);
-            }
+        public override void Regist() {
+            Debug.Log("Player is waiting.");
         }
     }
     public class Moving : PlayerState {
-
         public override int TrySwitch() {
             if (Input.GetMouseButtonDown(0))
                 return FIRING;
@@ -63,7 +53,7 @@ namespace PlayerStates {
             if (Input.GetKey(KeyCode.W)) yf += 1;
             Player.SetPosition(Vector3.MoveTowards(
                 Player.Position,
-                new Vector3(100 * xf, 100 * yf),
+                new Vector3(Player.Position.x + Player.MoveSpeed * xf, Player.Position.y + Player.MoveSpeed * yf),
                 Time.deltaTime * Player.MoveSpeed)
             );
         }
@@ -115,7 +105,7 @@ namespace PlayerStates {
                         && Mathf.Min(b, d)-5 <= m.Position.y
                         && m.Position.y <= Mathf.Max(b, d)+5) {
                         float tdelta = Mathf.Abs(A * m.Position.x + B * m.Position.y + C)
-                                        / Mathf.Sqrt(A * A + B * B) - m.BodyRange;
+                                        / Mathf.Sqrt(A * A + B * B) - m._Settings.BodyRange;
 
                         if ((delta >= 0 && tdelta < delta)
                             || (delta < 0 && tdis < dis)) {
@@ -126,12 +116,11 @@ namespace PlayerStates {
                         }
                     }
                 }
-                if (target == null) {
-                    return;
-                } else {
+                if (target == null || delta > 0)
+                    Player.Shoot(endPos);
+                else
                     Player.Shoot(target);
-                    LastTime += Player.GunInterval;
-                }
+                LastTime += Player.GunInterval;
             }
         }
     }
@@ -139,7 +128,9 @@ namespace PlayerStates {
         private float StartTime;
 
         public override int TrySwitch() {
-            if (Time.time - StartTime > Player.HealPrepareTime || Input.GetKey(KeyCode.E))
+            if (Time.time - StartTime > Player.HealPrepareTime
+                || Input.GetKey(KeyCode.E)
+                || Player.MP < 1)
                 return WAITING;
             return NONE;
         }

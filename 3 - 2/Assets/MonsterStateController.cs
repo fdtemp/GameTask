@@ -5,6 +5,15 @@ public class MonsterStateController {
     private Monster Monster;
     private MonsterState[] States;
     public int Current;
+
+    public void Reset() {
+        if (Current != MonsterState.WAITING) {
+            States[Current].Unregist();
+            States[MonsterState.WAITING].Regist();
+            Current = MonsterState.WAITING;
+        }
+    }
+
     public MonsterStateController(Monster monster) {
         Monster = monster;
         States = new MonsterState[4] {

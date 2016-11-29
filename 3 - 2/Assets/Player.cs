@@ -5,9 +5,6 @@ public class Player {
     public float MaxHP { get; private set; }
     public float MaxMP { get; private set; }
     public float MoveSpeed { get; private set; }
-    public float WaitNoHealingTime { get; private set; }
-    public float WaitHPHealingSpeed { get; private set; }
-    public float WaitMPHealingSpeed { get; private set; }
     public float GunDamage { get; private set; }
     public float GunRange { get; private set; }
     public float GunInterval { get; private set; }
@@ -24,6 +21,10 @@ public class Player {
 
     private GameObject Entity, HealthBoard;
     private PlayerStateController Controller;
+    private float WaitNoHealingTime;
+    private float WaitHPHealingSpeed;
+    private float WaitMPHealingSpeed;
+    private float PeaceStartTime;
 
     public Player() {
         HP = MaxHP = 100;
@@ -42,13 +43,20 @@ public class Player {
         HealMPCost = 50;
         Entity = GameObject.Instantiate<GameObject>(Game.PlayerPrefab);
         HealthBoard = GameObject.Instantiate<GameObject>(Game.HealthBoardPrefab);
-        HealthBoard.transform.parent = Entity.transform;
         Controller = new PlayerStateController(this);
         SetPosition(new Vector3(0, 0));
+        PeaceStartTime = Time.time;
     }
     public void Update() {
+        if (Time.time > PeaceStartTime + WaitNoHealingTime) {
+            HPChange(Time.deltaTime * WaitHPHealingSpeed);
+            MPChange(Time.deltaTime * WaitMPHealingSpeed);
+        }
         Controller.Update();
-        HealthBoard.GetComponent<TextMesh>().text = Mathf.FloorToInt(HP) + "/" + Mathf.FloorToInt(MaxHP);
+        HealthBoard.GetComponent<TextMesh>().text =
+            "Player Lv." + Mathf.CeilToInt(Game.MonsterKilled/5) + Environment.NewLine
+            + Mathf.FloorToInt(HP) + "/" + Mathf.FloorToInt(MaxHP) + Environment.NewLine
+            + Mathf.FloorToInt(MP) + "/" + Mathf.FloorToInt(MaxMP);
     }
 
     public void SetHP(float hp) { HP = Math.Max(hp,MaxHP); }
@@ -56,13 +64,22 @@ public class Player {
     public void SetPosition(Vector3 position) {
         Position = position;
         Entity.transform.position = Position;
+        HealthBoard.transform.position = Position;
         Game.Camera.transform.position = new Vector3(Position.x,Position.y,-10);
     }
-    public void HPChange(float delta) { HP = Mathf.Min(MaxHP, Mathf.Max(HP + delta, 0)); }
-    public void MPChange(float delta) { MP = Mathf.Min(MaxMP, Mathf.Max(MP + delta, 0)); }
+    public void HPChange(float delta) {
+        HP = Mathf.Min(MaxHP, HP + delta);
+        if (delta < 0) PeaceStartTime = Time.time;
+    }
+    public void MPChange(float delta) { MP = Mathf.Min(MaxMP, MP + delta); }
 
     public void Shoot(Monster monster) {
-        monster.HPChange(-GunDamage);
-        BulletAmount--;
+        monster.HPChange(-(GunDamage+Game.MonsterKilled/5));
+        //BulletAmount--;
+        Game.CreateLaser(Position, monster.Position, 0.2f);
+    }
+    public void Shoot(Vector3 position) {
+        //BulletAmount--;
+        Game.CreateLaser(Position, position, 0.2f);
     }
 }
