@@ -6,6 +6,7 @@ abstract public class PlayerState {
     public const int MOVING = 1;
     public const int FIRING = 2;
     public const int HEALING = 3;
+    public const int RELOADING = 4;
     public Player Player;
     abstract public int TrySwitch();
     virtual public void Regist() { }
@@ -20,6 +21,8 @@ namespace PlayerStates {
                 return FIRING;
             if (Input.GetKeyDown(KeyCode.Q))
                 return HEALING;
+            if (Input.GetKeyDown(KeyCode.R))
+                return RELOADING;
             if (Input.GetKeyDown(KeyCode.A)
                 || Input.GetKeyDown(KeyCode.S)
                 || Input.GetKeyDown(KeyCode.D)
@@ -144,6 +147,24 @@ namespace PlayerStates {
         public override void Unregist() {
             if (Time.time - StartTime > Player.HealPrepareTime)
                 Player.HPChange(Player.HealHPGain);
+        }
+    }
+    public class Reloading : PlayerState {
+        private float StartTime;
+
+        public override int TrySwitch() {
+            if (Time.time - StartTime > Player.GunReloadInterval || Input.GetKey(KeyCode.E))
+                return WAITING;
+            return NONE;
+        }
+        public override void Regist() {
+            Debug.Log("Player is Reloading.");
+            StartTime = Time.time;
+        }
+        public override void Update() { }
+        public override void Unregist() {
+            if (Time.time - StartTime > Player.GunReloadInterval)
+                Player.Reload();
         }
     }
 }

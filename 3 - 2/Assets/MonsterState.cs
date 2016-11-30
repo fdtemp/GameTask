@@ -20,7 +20,7 @@ namespace MonsterStates {
                 && Monster.Threat < Monster._Settings.AngryThreatLimit)
                 return ESCAPING;
             if ((Game.Player.Position - Monster.Position).magnitude < Monster._Settings.AlertRange
-                || Monster.Threat > 0.1)
+                || Monster.Threat > Monster._Settings.MoveThreatLimit)
                 return MOVING;
             if ((Game.Player.Position - Monster.Position).magnitude < Monster._Settings.AttackRange)
                 return ATTACKING;
@@ -36,7 +36,7 @@ namespace MonsterStates {
                 && Monster.Threat < Monster._Settings.AngryThreatLimit)
                 return ESCAPING;
             if ((Game.Player.Position - Monster.Position).magnitude > Monster._Settings.AlertRange * 1.5f
-                && Monster.Threat < 0.1)
+                && Monster.Threat < Monster._Settings.MoveThreatLimit)
                 return WAITING;
             if ((Game.Player.Position - Monster.Position).magnitude < Monster._Settings.AttackRange)
                 return ATTACKING;
@@ -51,7 +51,6 @@ namespace MonsterStates {
                 Game.Player.Position,
                 Time.deltaTime * Monster._Settings.MoveSpeed)
             );
-            Monster.ThreatChange(-Time.deltaTime * Monster._Settings.ThreatDecreaseSpeed);
         }
     }
     public class Attacking : MonsterState {
@@ -62,7 +61,7 @@ namespace MonsterStates {
                 return ESCAPING;
             if ((Game.Player.Position - Monster.Position).magnitude > Monster._Settings.AttackRange
                 && ((Game.Player.Position - Monster.Position).magnitude < Monster._Settings.AlertRange * 2
-                    || Monster.Threat > 0.1f))
+                    || Monster.Threat > Monster._Settings.MoveThreatLimit))
                 return MOVING;
             return NONE;
         }

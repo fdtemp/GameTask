@@ -7,14 +7,15 @@ public class PlayerStateController {
     public int Current;
     public PlayerStateController(Player player) {
         Player = player;
-        States = new PlayerState[4] {
+        States = new PlayerState[5] {
             new PlayerStates.Waiting(),
             new PlayerStates.Moving(),
             new PlayerStates.Firing(),
             new PlayerStates.Healing(),
+            new PlayerStates.Reloading(),
         };
-        for (int i = 0; i < 4; i++)
-            States[i].Player = Player;
+        foreach (var state in States)
+            state.Player = Player;
         Current = PlayerState.WAITING;
         States[Current].Regist();
     }

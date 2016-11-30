@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class Game : MonoBehaviour {
     public static Vector3 ScreenOrigin = new Vector3(-80,-60);
     public static Vector3 ScreenSize = new Vector3(160,120);
-    public float MonsterGenerateInterval = 10f;
+    public float MonsterGenerateInterval = 6;
 
     private float LastGenerateTime;
     private System.Random Seed;
@@ -53,9 +53,11 @@ public class Game : MonoBehaviour {
         Monsters = new List<Monster>();
         MonsterPool = new Dictionary<string, ObjectPool<Monster>>();
         MonsterA.Init();
+        MonsterB.Init();
         MonsterKilled = 0;
         LastGenerateTime = Time.time - MonsterGenerateInterval;
         Player = new Player();
+        Player.SetPosition(new Vector3(0, 0));
         LaserPool = new ObjectPool<GameObject>(
             15,
             delegate () {
@@ -79,25 +81,33 @@ public class Game : MonoBehaviour {
         if (Stopped) return;
         while (Time.time - LastGenerateTime > MonsterGenerateInterval) {
             Monster m;
-            m = MonsterPool["MonsterA"].Get();
-            m.SetRelativePosition(new Vector3(Seed.Next(-80,80),Seed.Next(-60,60)));
+            for (int i = 0; i < 2; i++) {
+                m = MonsterPool["MonsterA"].Get();
+                m.SetRelativePosition(new Vector3(Seed.Next(-80, 80), Seed.Next(-60, 60)));
+                Monsters.Add(m);
+            }
+            m = MonsterPool["MonsterB"].Get();
+            m.SetRelativePosition(new Vector3(Seed.Next(-80, 80), Seed.Next(-60, 60)));
             Monsters.Add(m);
             LastGenerateTime += MonsterGenerateInterval;
         }
         Player.Update();
+        for (int i = 0; i < Monsters.Count; i++)
+            Monsters[i].Update();
         List<Monster> lis = new List<Monster>();
         for (int i = 0; i < Monsters.Count; i++) {
             Monster m = Monsters[i];
-            if (m.HP > 1.01)
+            if (m.HP > 1.01) {
                 lis.Add(m);
-            else {
+            } else {
                 MonsterPool[m._Settings.Name].Put(Monsters[i]);
                 MonsterKilled++;
             }
-        } 
+        }
         Monsters = lis;
-        for (int i = 0; i < Monsters.Count; i++)
-            Monsters[i].Update();
-        if (Player.HP < 0) Stopped = true;
+        if (Player.HP < 0) {
+            Game.Player.Entity.GetComponent<PlayerScript>().Dead = true;
+            Stopped = true;
+        }
 	}
 }
