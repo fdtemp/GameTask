@@ -83,10 +83,7 @@ namespace PlayerStates {
                 && Time.time - LastTime > Player.GunInterval
                 && Input.GetMouseButton(0)) {
                 Vector3
-                    mousePos = new Vector3(
-					    Game.Player.Position.x + Game.ScreenOrigin.x + (Input.mousePosition.x / Screen.width) * Game.ScreenSize.x,
-					    Game.Player.Position.y + Game.ScreenOrigin.y + (Input.mousePosition.y / Screen.height) * Game.ScreenSize.y
-                    ),
+                    mousePos = Game.GetMousePosition(),
                     endPos = Vector3.MoveTowards(Player.Position, mousePos, Player.GunRange);
                 float
                     a = Player.Position.x,
@@ -119,7 +116,7 @@ namespace PlayerStates {
                         }
                     }
                 }
-                if (target == null || delta > 0)
+                if (target == null || delta > 1)
                     Player.Shoot(endPos);
                 else
                     Player.Shoot(target);

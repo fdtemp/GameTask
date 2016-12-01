@@ -4,16 +4,15 @@ using System.Collections.Generic;
 public class Game : MonoBehaviour {
     public static Vector3 ScreenOrigin = new Vector3(-80,-60);
     public static Vector3 ScreenSize = new Vector3(160,120);
-    public float MonsterGenerateInterval = 6;
+    public static float MonsterGenerateInterval = 6;
 
-    private float LastGenerateTime;
-    private System.Random Seed;
+    private static float LastGenerateTime;
+    private static System.Random Seed;
 
     private static int ID = 0;
     public static GameObject PlayerPrefab, MonsterPrefab, HealthBoardPrefab, LaserPrefab;
     public static GameObject Camera;
     public static List<Monster> Monsters;
-    public static int MonsterKilled;
     public static Dictionary<string, ObjectPool<Monster>> MonsterPool;
     public static Player Player;
     public static bool Stopped;
@@ -54,10 +53,7 @@ public class Game : MonoBehaviour {
         MonsterPool = new Dictionary<string, ObjectPool<Monster>>();
         MonsterA.Init();
         MonsterB.Init();
-        MonsterKilled = 0;
-        LastGenerateTime = Time.time - MonsterGenerateInterval;
         Player = new Player();
-        Player.SetPosition(new Vector3(0, 0));
         LaserPool = new ObjectPool<GameObject>(
             15,
             delegate () {
@@ -75,13 +71,17 @@ public class Game : MonoBehaviour {
                 GameObject.Destroy(l);
                 return true;
             });
+
+        Player.EXP = 0;
+        LastGenerateTime = Time.time - MonsterGenerateInterval;
+        Player.SetPosition(new Vector3(0, 0));
         Stopped = false;
 	}
 	void Update () {
         if (Stopped) return;
         while (Time.time - LastGenerateTime > MonsterGenerateInterval) {
             Monster m;
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 3; i++) {
                 m = MonsterPool["MonsterA"].Get();
                 m.SetRelativePosition(new Vector3(Seed.Next(-80, 80), Seed.Next(-60, 60)));
                 Monsters.Add(m);
@@ -101,7 +101,7 @@ public class Game : MonoBehaviour {
                 lis.Add(m);
             } else {
                 MonsterPool[m._Settings.Name].Put(Monsters[i]);
-                MonsterKilled++;
+                Player.EXP += m._Settings.EXP;
             }
         }
         Monsters = lis;
@@ -110,4 +110,14 @@ public class Game : MonoBehaviour {
             Stopped = true;
         }
 	}
+    public static void Restart() {
+        Player.EXP = 0;
+        LastGenerateTime = Time.time - MonsterGenerateInterval;
+        Player.Restart();
+        for (int i = 0; i < Monsters.Count; i++)
+            MonsterPool[Monsters[i]._Settings.Name].Put(Monsters[i]);
+        Monsters.Clear();
+        Player.SetPosition(new Vector3(0, 0));
+        Stopped = false;
+    }
 }

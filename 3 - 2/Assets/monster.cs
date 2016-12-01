@@ -3,6 +3,7 @@ using System;
 
 public class MonsterSettings {
     public string Name;
+    public int EXP;
     public float MaxHP;
     public float MaxMP;
     public float BodyRange;
@@ -57,7 +58,7 @@ abstract public class Monster {
 
 public class MonsterA : Monster {
     private TextMesh HBText;
-    private float HPHealingSpeed = 5;
+    private float HPHealingSpeed = 2;
 
     public static void Init() {
         Game.MonsterPool.Add("MonsterA", new ObjectPool<Monster>(
@@ -89,18 +90,19 @@ public class MonsterA : Monster {
     public MonsterA() {
         _Settings = new MonsterSettings {
             Name = "MonsterA",
-            MaxHP = 100,
+            EXP = 1,
+            MaxHP = 80,
             MaxMP = 0,
             BodyRange = 3,
             MoveSpeed = 15,
-            AlertRange = 50,
+            AlertRange = 30,
             AttackRange = 10,
             AttackInterval = 1,
             ThreatChangeSpeed = 1,
             EscapingStartHPLimit = 40,
-            EscapingEndHPLimit = 160,
-            AngryThreatLimit = 150,
-            MoveThreatLimit = 50,
+            EscapingEndHPLimit = 80,
+            AngryThreatLimit = 9999,
+            MoveThreatLimit = 100,
         };
         Entity = GameObject.Instantiate<GameObject>(Game.MonsterPrefab);
         Entity.transform.localScale = new Vector3(_Settings.BodyRange, _Settings.BodyRange, 1);
@@ -129,7 +131,7 @@ public class MonsterA : Monster {
 public class MonsterB : Monster {
     private TextMesh HBText;
     private float HPHealingSpeed = 5;
-    private float MPHealingSpeed = 0.25f;
+    private float MPHealingSpeed = 0.5f;
 
     public static void Init() {
         Game.MonsterPool.Add("MonsterB", new ObjectPool<Monster>(
@@ -161,18 +163,19 @@ public class MonsterB : Monster {
     public MonsterB() {
         _Settings = new MonsterSettings {
             Name = "MonsterB",
-            MaxHP = 300,
+            EXP = 5,
+            MaxHP = 400,
             MaxMP = 50,
             BodyRange = 5,
             MoveSpeed = 10,
             AlertRange = 50,
-            AttackRange = 20,
+            AttackRange = 15,
             AttackInterval = 1,
             ThreatChangeSpeed = 1,
-            EscapingStartHPLimit = 40,
-            EscapingEndHPLimit = 160,
+            EscapingStartHPLimit = 100,
+            EscapingEndHPLimit = 300,
             AngryThreatLimit = 200,
-            MoveThreatLimit = 1,
+            MoveThreatLimit = 50,
         };
         Entity = GameObject.Instantiate<GameObject>(Game.MonsterPrefab);
         Entity.transform.localScale = new Vector3(_Settings.BodyRange, _Settings.BodyRange, 1);

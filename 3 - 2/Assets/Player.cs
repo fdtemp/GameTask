@@ -30,6 +30,7 @@ public class Player {
     private float WaitMPHealingSpeed;
     private float PeaceStartTime;
     private float ReloadStartTime;
+    public float EXP;
     private int Level;
 
     public Player() {
@@ -40,9 +41,9 @@ public class Player {
         WaitHPHealingSpeed = 0.5f;
         WaitMPHealingSpeed = 0.25f;
         MoveSpeed = 15;
-        GunBasicDamage = 30;
+        GunBasicDamage = 50;
         GunRange = 75;
-        GunInterval = 0.25f;
+        GunInterval = 0.2f;
         BulletAmount = GunBasicBulletAmount = 15;
         GunBasicReloadInterval = 2;
         HealPrepareTime = 5;
@@ -56,8 +57,14 @@ public class Player {
         SetPosition(Vector3.zero);
         RefreshLevel();
     }
+    public void Restart() {
+        RefreshLevel();
+        HP = MaxHP;
+        MP = MaxMP;
+        BulletAmount = GunBulletAmount;
+    }
     public void Update() {
-        if (Game.MonsterKilled != 0) RefreshLevel();
+        if (EXP != 0) RefreshLevel();
         if (BulletAmount == 0 && Time.time - ReloadStartTime > GunReloadInterval)
             Reload();
         if (Time.time > PeaceStartTime + WaitNoHealingTime) {
@@ -72,9 +79,9 @@ public class Player {
             + BulletAmount + "/" + GunBulletAmount;
     }
     public void RefreshLevel() {
-        Level = Mathf.FloorToInt(Mathf.Sqrt(Game.MonsterKilled));
-        GunDamage = GunBasicDamage + Level;
-        GunReloadInterval = GunBasicReloadInterval * 100 / (100 + Level);
+        Level = Mathf.FloorToInt(Mathf.Sqrt(EXP));
+        GunDamage = GunBasicDamage + Level * 2;
+        GunReloadInterval = GunBasicReloadInterval * 50 / (50 + Level);
         GunBulletAmount = GunBasicBulletAmount + Level;
         MaxHP = BasicMaxHP + Level * 10;
         MaxMP = BasicMaxMP + Level * 10;
@@ -94,7 +101,7 @@ public class Player {
     }
     public void MPChange(float delta) { MP = Mathf.Min(MaxMP, MP + delta); }
     public void Shoot(Monster monster) {
-        monster.HPChange(-(GunDamage+Game.MonsterKilled/5));
+        monster.HPChange(-GunDamage);
         BulletAmount--;
         Game.CreateLaser(Position, monster.Position, 0.2f);
         if (BulletAmount == 0) ReloadStartTime = Time.time;
