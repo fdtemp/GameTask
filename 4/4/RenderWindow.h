@@ -6,6 +6,7 @@ namespace RenderWindow {
 	PAINTSTRUCT ps;
 	HDC memhdc;
 	HBITMAP bmp;
+	HPEN pen;
 	HWND hwnd;
 	MSG msg;
 	WNDCLASS wndclass;
@@ -18,17 +19,24 @@ namespace RenderWindow {
 			break;
 		case WM_PAINT:
 			hdc = BeginPaint(hwnd, &ps);
-			memhdc = CreateCompatibleDC(hdc);
-			bmp = CreateCompatibleBitmap(hdc, ScreenWidth, ScreenHeight);
-			SelectObject(memhdc, bmp);
-			for (int i = 0;i < ScreenWidth;i++)
-				for (int j = 0;j < ScreenHeight;j++) {
-					Render::Color col = Render::Color(rend.Output[i][j]);
-					SetPixel(memhdc, i, j, RGB(col.r, col.g, col.b));
-				}
-			BitBlt(hdc, 0, 0, ScreenWidth, ScreenHeight, memhdc, 0, 0, SRCCOPY);
-			//DeleteObject(bmp);
-			//DeleteObject(memhdc);
+				memhdc = CreateCompatibleDC(hdc);
+				bmp = CreateCompatibleBitmap(hdc, ScreenWidth, ScreenHeight);
+				SelectObject(memhdc, bmp);
+					for (int i = 0;i < ScreenWidth;i++)
+						for (int j = 0;j < ScreenHeight;j++) {
+							Render::Color col = Render::Color(rend.Output[i][j]);
+							SetPixel(memhdc, i, j, RGB(col.r, col.g, col.b));
+						}
+					pen = (HPEN)GetStockObject(BLACK_PEN);
+					SelectObject(memhdc, pen);
+					for (list<Render::Line>::iterator l = rend.LineList.begin();l != rend.LineList.end();++l) {
+						MoveToEx(memhdc, floor(ScreenWidth*l->Start.x), floor(ScreenHeight*l->Start.y), NULL);
+						LineTo(memhdc, floor(ScreenWidth*l->End.x), floor(ScreenHeight*l->End.y));
+					}
+					DeleteObject(pen);
+					BitBlt(hdc, 0, 0, ScreenWidth, ScreenHeight, memhdc, 0, 0, SRCCOPY);
+				DeleteObject(bmp);
+				DeleteObject(memhdc);
 			EndPaint(hwnd, &ps);
 			break;
 		case WM_DESTROY:

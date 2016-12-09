@@ -1,5 +1,4 @@
 #include <Windows.h>
-//#include <math.h>
 #include <iostream>
 #include "4.h"
 #include "Renderer.h"
