@@ -29,9 +29,9 @@ namespace RenderWindow {
 						}
 					pen = (HPEN)GetStockObject(BLACK_PEN);
 					SelectObject(memhdc, pen);
-					for (list<Render::Line>::iterator l = rend.LineList.begin();l != rend.LineList.end();++l) {
-						MoveToEx(memhdc, floor(ScreenWidth*l->Start.x), floor(ScreenHeight*l->Start.y), NULL);
-						LineTo(memhdc, floor(ScreenWidth*l->End.x), floor(ScreenHeight*l->End.y));
+					for (list<Render::ScreenLine>::iterator l = rend.LineList.begin();l != rend.LineList.end();++l) {
+						MoveToEx(memhdc, l->Start.x, l->Start.y, NULL);
+						LineTo(memhdc, l->End.x, l->End.y);
 					}
 					DeleteObject(pen);
 					BitBlt(hdc, 0, 0, ScreenWidth, ScreenHeight, memhdc, 0, 0, SRCCOPY);
