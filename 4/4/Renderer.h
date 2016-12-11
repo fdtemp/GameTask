@@ -17,8 +17,33 @@ namespace Render {
 		Vector3() :x(0), y(0), z(0) {}
 		Vector3(float _x, float _y, float _z) :x(_x), y(_y), z(_z) {}
 		Vector3 normalise() {
-			float len = x*x + y*y + z*z;
+			float len = sqrt(x*x + y*y + z*z);
 			return Vector3(x / len, y / len, z / len);
+		}
+		Vector3 cross(Vector3 &v) {
+			return Vector3(y*v.z - z*v.y, z*v.x - x*v.z, x*v.y - y*v.x);
+		}
+		float dot(Vector3 &v) {
+			return x*v.x + y*v.y + z*v.z;
+		}
+		Vector3 mul(mat &m, float &w) {
+			mat in(1, 4);
+			in << x << y << z << w << endr;
+			mat out = in * m;
+			w = out(0, 3);
+			return Vector3(out(0, 0), out(0, 1), out(0, 2));
+		}
+		Vector3 mul(float f) {
+			return Vector3(x*f, y*f, z*f);
+		}
+		Vector3 add(Vector3 &v) {
+			return Vector3(x + v.x, y + v.y, z + v.z);
+		}
+		Vector3 sub(Vector3 &v) {
+			return Vector3(x - v.x, y - v.y, z - v.z);
+		}
+		Color toRGB() {
+			return Color(maxf(0, minf(1, abs(x))) * 255, maxf(0, minf(1, abs(y))) * 255, maxf(0, minf(1, abs(z))) * 255);
 		}
 		void Reverse() { x = -x;y = -y;z = -z; }
 	};
@@ -79,10 +104,14 @@ namespace Render {
 	class Premitive {
 	public:
 		Vector3 a, b, c;
+		Vector3 aw, bw, cw;
+		Vector3 normal;
 		float au, av, bu, bv, cu, cv;
 		Premitive() :a(), b(), c() {}
 		Premitive(Vector3 &_a, Vector3 &_b, Vector3 &_c, float _au, float _av, float _bu, float _bv, float _cu, float _cv)
-			:a(_a), b(_b), c(_c), au(_au), av(_av), bu(_bu), bv(_bv), cu(_cu), cv(_cv) {}
+			:a(_a), b(_b), c(_c), au(_au), av(_av), bu(_bu), bv(_bv), cu(_cu), cv(_cv) {
+			normal = c.sub(b).cross(b.sub(a));
+		}
 	};
 	class Model {
 	public:
@@ -106,16 +135,17 @@ namespace Render {
 			};
 			list<Premitive> lis = list<Premitive>();
 			lis.push_back(Premitive(vec[0], vec[1], vec[2], 0, 0, 1, 0, 0, 1));
-			lis.push_back(Premitive(vec[1], vec[2], vec[3], 1, 0, 0, 1, 1, 1));
-			lis.push_back(Premitive(vec[0], vec[1], vec[4], 0, 0, 0, 1, 1, 0));
+			lis.push_back(Premitive(vec[1], vec[3], vec[2], 1, 0, 1, 1, 0, 1));
+			lis.push_back(Premitive(vec[0], vec[4], vec[1], 0, 0, 1, 0, 0, 1));
 			lis.push_back(Premitive(vec[1], vec[4], vec[5], 0, 1, 1, 0, 1, 1));
 			lis.push_back(Premitive(vec[0], vec[2], vec[6], 0, 0, 0, 1, 1, 1));
-			lis.push_back(Premitive(vec[0], vec[4], vec[6], 0, 0, 1, 0, 1, 1));
+			lis.push_back(Premitive(vec[0], vec[6], vec[4], 0, 0, 1, 1, 1, 0));
+
 			lis.push_back(Premitive(vec[2], vec[3], vec[7], 0, 0, 0, 1, 1, 1));
-			lis.push_back(Premitive(vec[2], vec[6], vec[7], 0, 0, 1, 0, 1, 1));
-			lis.push_back(Premitive(vec[1], vec[3], vec[5], 0, 0, 0, 1, 1, 0));
+			lis.push_back(Premitive(vec[2], vec[7], vec[6], 0, 0, 1, 1, 1, 0));
+			lis.push_back(Premitive(vec[1], vec[5], vec[3], 0, 0, 1, 0, 0, 1));
 			lis.push_back(Premitive(vec[3], vec[5], vec[7], 0, 1, 1, 0, 1, 1));
-			lis.push_back(Premitive(vec[4], vec[5], vec[6], 0, 0, 0, 1, 1, 0));
+			lis.push_back(Premitive(vec[4], vec[6], vec[5], 0, 0, 1, 0, 0, 1));
 			lis.push_back(Premitive(vec[5], vec[6], vec[7], 0, 1, 1, 0, 1, 1));
 			return lis;
 		};
@@ -130,15 +160,10 @@ namespace Render {
 	};
 	class Camera {
 	public:
-		float theta, AspectRatio,Near,Far;
+		float theta, AspectRatio, Near, Far;
 		Transform *transform;
 		Camera() {
-			theta = 3.1415926f / 2;
-			AspectRatio = ScreenWidth / ScreenHeight;
-			Near = 1;
-			Far=1000;
 			transform = new Transform();
-			transform->Rotation.angle = 3.1415926f / 4;
 		}
 		~Camera() {
 			delete transform;
@@ -146,16 +171,22 @@ namespace Render {
 	};
 	class Light {
 	public:
-		Vector3 Direction;
-		Light() {
-			Direction = Vector3(1, -1, -1);
+		virtual Vector3 GetInputLight(Vector3 &target) { return Vector3(); }
+	};
+	class PointLight : public Light {
+	public:
+		Vector3 pos;
+		PointLight(Vector3 position) :pos(position) {}
+		Vector3 GetInputLight(Vector3 &target) {
+			return pos.sub(target);
 		}
 	};
 	class ScreenPoint {
 	public:
 		int x, y;
 		float z;
-		ScreenPoint() :x(0), y(0) {}
+		ScreenPoint() :x(0), y(0), z(0) {}
+		ScreenPoint(int _x, int _y) :x(_x), y(_y), z(0) {}
 		ScreenPoint(int _x, int _y, float _z) :x(_x), y(_y), z(_z) {}
 	};
 	class ScreenLine {
@@ -165,12 +196,19 @@ namespace Render {
 	};
 	class ZBufferPoint {
 	public:
-		float z;
-		Vector3 worldpoint;
-		Vector3 light;
-		Vector3 view;
+		ScreenPoint screenpos;
+		Vector3 worldpos;
+		Vector3 lightdirection;
+		Vector3 viewdirection;
+		Vector3 normaldirection;
+		Vector3 worldnormaldirection;
 		float u, v;
-		ZBufferPoint() :z(-1e20), worldpoint(), light(), view(), u(0), v(0) {}
+
+		ZBufferPoint() {}
+		ZBufferPoint(int x, int y) :screenpos(x,y) {}
+
+		Color RGB;
+		float LightStrength;
 	};
 	class Renderer {
 	public:
@@ -211,7 +249,8 @@ namespace Render {
 			return Map[(int)floor(u * 10)][(int)floor(v * 10)];
 		}
 		void AddZBuffer(int x, int y) {
-			if (x<0 || x>ScreenWidth || y<0 || y>ScreenHeight) return;
+			if (x<0 || x>=ScreenWidth || y<0 || y>=ScreenHeight) return;
+
 			float
 				fx = (float)x + 0.5,
 				fy = (float)y + 0.5;
@@ -222,20 +261,40 @@ namespace Render {
 				/ ((sp1.y - sp3.y)*(sp2.x - sp3.x) - (sp1.x - sp3.x)*(sp2.y - sp3.y));
 			float
 				fz = 1/(c1 / sp1.z + c2 / sp2.z + (1 - c1 - c2) / sp3.z);
+
 			ZBufferPoint &bp = ZBuffer[x][y];
-			if (bp.z > fz) return;
-			else bp.z = fz;
-			bp.u = fz * (
+			if (bp.screenpos.z < fz && bp.screenpos.z != 0) return;
+			else bp.screenpos.z = fz;
+			bp.u = maxf(0, minf(1, fz * (
 				(CurrentPremitive->au * c1) / sp1.z
 				+ (CurrentPremitive->bu * c2) / sp2.z
 				+ (CurrentPremitive->cu * (1 - c1 - c2)) / sp3.z
-			);
-			bp.v = fz * (
+				)));
+			bp.v = maxf(0, minf(1, fz * (
 				(CurrentPremitive->av * c1) / sp1.z
 				+ (CurrentPremitive->bv * c2) / sp2.z
 				+ (CurrentPremitive->cv * (1 - c1 - c2)) / sp3.z
-			);
-			Output[x][y] = GetColorByUV(bp.u,bp.v);
+			)));
+			bp.worldpos.x = //fz * (
+				(CurrentPremitive->aw.x * c1) /// sp1.z
+				+ (CurrentPremitive->bw.x * c2) /// sp2.z
+				+ (CurrentPremitive->cw.x * (1 - c1 - c2)); /// sp3.z
+			//);
+			bp.worldpos.y = //fz * (
+				(CurrentPremitive->aw.y * c1)// / sp1.z
+				+ (CurrentPremitive->bw.y * c2)// / sp2.z
+				+ (CurrentPremitive->cw.y * (1 - c1 - c2));// / sp3.z
+			//);
+			bp.worldpos.z = //fz * (
+				(CurrentPremitive->aw.z * c1)// / sp1.z
+				+ (CurrentPremitive->bw.z * c2)// / sp2.z
+				+ (CurrentPremitive->cw.z * (1 - c1 - c2));// / sp3.z
+			//);
+			bp.lightdirection = mLight->GetInputLight(bp.worldpos);
+			bp.viewdirection = mCamera->transform->Translation.sub(bp.worldpos);
+			bp.normaldirection = CurrentPremitive->normal;
+			float w;
+			bp.worldnormaldirection = bp.normaldirection.mul(ModelMat, w = 0);
 		}
 		void RasterizeTriangle(ScreenPoint &top, ScreenPoint &left, ScreenPoint &right) {
 			for (int y = left.y;y <= top.y;++y) {
@@ -261,11 +320,33 @@ namespace Render {
 			}
 			//DrawTriangle_Wireframe(bot, left, right);
 		}
+		void BasicShade(ZBufferPoint &bp) {
+			bp.RGB = GetColorByUV(bp.u, bp.v);
+		};
+		void LightShade_Lambort(ZBufferPoint &bp) {
+			float atten = 1;
+			Vector3
+				normal = bp.worldnormaldirection.normalise(),
+				light = bp.lightdirection.normalise();
+			bp.LightStrength = maxf(0, normal.dot(light));
+			//bp.LightStrength = 1;
+			//bp.RGB = light.toRGB();
+			//bp.LightStrength = 1;
+			//bp.RGB = normal.toRGB();
+			//bp.LightStrength = 1;
+			//bp.RGB = bp.worldpos.normalise().toRGB();
+		};
+		void ShadeCombine(ZBufferPoint &bp) {
+			float r = maxf(0, minf(1, bp.LightStrength));
+			bp.RGB.r *= r;
+			bp.RGB.g *= r;
+			bp.RGB.b *= r;
+		};
 
 		void StartRender() {
 			for (int i = 0;i < ScreenWidth;i++)
 				for (int j = 0;j < ScreenHeight;j++) {
-					ZBuffer[i][j] = ZBufferPoint();
+					ZBuffer[i][j] = ZBufferPoint(i,j);
 					Output[i][j] = Color(255,255,255);
 				}
 			LineList.clear();
@@ -305,28 +386,33 @@ namespace Render {
 			TransformMat = ModelMat * ViewMat * ProjectionMat;
 		}
 		void TransformPremitive() {
-			mat in(1, 4);
-			in << CurrentPremitive->a.x << CurrentPremitive->a.y << CurrentPremitive->a.z << 1 << endr;
-			mat out = in * TransformMat;
+			Vector3 out;
+			float w;
+			//A
+			out = CurrentPremitive->a.mul(TransformMat, w = 1);//Get Projective Position
 			sp1 = ScreenPoint(
-				floor(ScreenWidth * (1 + out(0, 0) / out(0, 3)) / 2),
-				floor(ScreenWidth*(1 + out(0, 1) / out(0, 3)) / 2),
-				out(0, 3)
+				floor(ScreenWidth * (1 + out.x / w) / 2),
+				floor(ScreenWidth * (1 + out.y / w) / 2),
+				out.z
 			);
-			in << CurrentPremitive->b.x << CurrentPremitive->b.y << CurrentPremitive->b.z << 1 << endr;
-			out = in * TransformMat;
+			CurrentPremitive->aw = CurrentPremitive->a.mul(ModelMat,w = 1);//Get World Position
+			//B
+			out = CurrentPremitive->b.mul(TransformMat, w = 1);//Get Projective Position
 			sp2 = ScreenPoint(
-				floor(ScreenWidth * (1 + out(0, 0) / out(0, 3)) / 2),
-				floor(ScreenWidth*(1 + out(0, 1) / out(0, 3)) / 2),
-				out(0, 3)
+				floor(ScreenWidth * (1 + out.x / w) / 2),
+				floor(ScreenWidth * (1 + out.y / w) / 2),
+				out.z
 			);
-			in << CurrentPremitive->c.x << CurrentPremitive->c.y << CurrentPremitive->c.z << 1 << endr;
-			out = in * TransformMat;
+			CurrentPremitive->bw = CurrentPremitive->b.mul(ModelMat, w = 1);//Get World Position
+			//C
+			out = CurrentPremitive->c.mul(TransformMat, w = 1);//Get Projective Position
 			sp3 = ScreenPoint(
-				floor(ScreenWidth * (1 + out(0, 0) / out(0, 3)) / 2),
-				floor(ScreenWidth*(1 + out(0, 1) / out(0, 3)) / 2),
-				out(0, 3)
+				floor(ScreenWidth * (1 + out.x / w) / 2),
+				floor(ScreenWidth * (1 + out.y / w) / 2),
+				out.z
 			);
+			CurrentPremitive->cw = CurrentPremitive->c.mul(ModelMat, w = 1);//Get World Position
+
 			//Draw Wireframe
 			DrawTriangle_Wireframe(sp1, sp2, sp3);
 		}
@@ -409,43 +495,75 @@ namespace Render {
 			}
 		}
 		void Shade() {
-
+			for (int i = 0;i < ScreenWidth;i++)
+				for (int j = 0;j < ScreenHeight;j++)
+					if (ZBuffer[i][j].screenpos.z != 0) {
+						BasicShade(ZBuffer[i][j]);
+						LightShade_Lambort(ZBuffer[i][j]);
+						ShadeCombine(ZBuffer[i][j]);
+					}
 		}
 		void EndRender() {
-
+			for (int i = 0;i < ScreenWidth;i++)
+				for (int j = 0;j < ScreenHeight;j++)
+					if (ZBuffer[i][j].screenpos.z != 0)
+						Output[i][j] = ZBuffer[i][j].RGB;
 		}
 		
-		Model *cube1 = new Cube(), *cube2 = new Cube(), *cube3 = new Cube();
+		Model
+			*cube1 = new Cube(),
+			*cube2 = new Cube(),
+			*cube3 = new Cube(),
+			*cube4 = new Cube(),
+			*cube5 = new Cube();
+		Color col[8] = {
+			Color(0, 0, 0),
+			Color(255, 0, 0),
+			Color(0, 255, 0),
+			Color(0, 0, 255),
+			Color(255, 255, 0),
+			Color(255, 0, 255),
+			Color(0, 255, 255),
+			Color(128, 128, 128),
+		};
 		Renderer() {
-			Color c[8];
-			c[0] = Color(0, 0, 0);
-			c[1] = Color(255, 0, 0);
-			c[2] = Color(0, 255, 0);
-			c[3] = Color(0, 0, 255);
-			c[4] = Color(255, 255, 0);
-			c[5] = Color(255, 0, 255);
-			c[6] = Color(0, 255, 255);
-			c[7] = Color(128, 128, 128);
 			for (int i = 0;i < 10;i++)
 				for (int j = 0;j < 10;j++)
-					Map[i][j] = c[((10007*i*j + 100007)%1007) % 8];
+					Map[i][j] = col[((10007 * (i + 17) * (j + 17) + 100007) % 107) % 8];
 			LineList = list<ScreenLine>();
 			mCamera = new Camera();
-			mLight = new Light();
+				mCamera->theta = 3.1415926f / 2;
+				mCamera->AspectRatio = ScreenWidth / ScreenHeight;
+				mCamera->Near = 1;
+				mCamera->Far = 1000;
+				mCamera->transform->Rotation.angle = 3.1415926f / 4;
+			mLight = new PointLight(Vector3(0, 0, 0));
 			cube1->transform->Translation = Vector3(3, -3.5, -0.5);
-			cube1->transform->Rotation.angle = -3.1415926f / 4;
+			cube1->transform->Scale = Vector3(1, 1, 1);
 				cube2->Parent = cube1;
-				cube3->Parent = cube1;
 				cube2->transform->Translation = Vector3(1, 1, 1);
-				cube3->transform->Translation = Vector3(-1, -1, 1);
+				cube2->transform->Scale = Vector3(0.5, 0.5, 0.5);
+					cube4->Parent = cube2;
+					cube4->transform->Translation = Vector3(0, 0, 1);
+					cube4->transform->Scale = Vector3(0.5, 0.5, 0.5);
+				cube3->Parent = cube1;
+				cube3->transform->Translation = Vector3(0, 0, 1);
+				cube3->transform->Scale = Vector3(0.5, 0.5, 0.5);
+					cube5->Parent = cube3;
+					cube5->transform->Translation = Vector3(0, 0, 1);
+					cube5->transform->Scale = Vector3(0.5, 0.5, 0.5);
 			ModelList.push_back(cube1);
 			ModelList.push_back(cube2);
 			ModelList.push_back(cube3);
+			ModelList.push_back(cube4);
+			ModelList.push_back(cube5);
 		}
 		void Refresh() {
 			cube1->transform->Rotation.angle += -3.1415926f / 12;
 			cube2->transform->Rotation.angle += -3.1415926f / 12;
 			cube3->transform->Rotation.angle += -3.1415926f / 12;
+			cube4->transform->Rotation.angle += -3.1415926f / 12;
+			cube5->transform->Rotation.angle += -3.1415926f / 12;
 			StartRender();
 			for (list<Model*>::iterator now = ModelList.begin();now != ModelList.end();++now) {
 				CurrentModel = *now;
@@ -459,10 +577,10 @@ namespace Render {
 					CurrentPremitive = &(*i);
 					TransformPremitive();
 					Rasterize();
-					Shade();
 				}
 				PremitiveList.clear();
 			}
+			Shade();
 			EndRender();
 		}
 	};
