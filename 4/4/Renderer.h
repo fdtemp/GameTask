@@ -324,11 +324,13 @@ namespace Render {
 			bp.RGB = GetColorByUV(bp.u, bp.v);
 		};
 		void LightShade_Lambort(ZBufferPoint &bp) {
-			float atten = 1;
+			float
+				atten = 1,
+				fix = 0.2;
 			Vector3
 				normal = bp.worldnormaldirection.normalise(),
 				light = bp.lightdirection.normalise();
-			bp.LightStrength = maxf(0, normal.dot(light));
+			bp.LightStrength = maxf(0, fix + (1 - fix) * normal.dot(light));
 			//bp.LightStrength = 1;
 			//bp.RGB = light.toRGB();
 			//bp.LightStrength = 1;
@@ -414,7 +416,7 @@ namespace Render {
 			CurrentPremitive->cw = CurrentPremitive->c.mul(ModelMat, w = 1);//Get World Position
 
 			//Draw Wireframe
-			DrawTriangle_Wireframe(sp1, sp2, sp3);
+			//DrawTriangle_Wireframe(sp1, sp2, sp3);
 		}
 		void Rasterize() {
 			if (sp1.y == sp2.y && sp2.y == sp3.y) return;
@@ -559,11 +561,11 @@ namespace Render {
 			ModelList.push_back(cube5);
 		}
 		void Refresh() {
-			cube1->transform->Rotation.angle += -3.1415926f / 12;
-			cube2->transform->Rotation.angle += -3.1415926f / 12;
-			cube3->transform->Rotation.angle += -3.1415926f / 12;
-			cube4->transform->Rotation.angle += -3.1415926f / 12;
-			cube5->transform->Rotation.angle += -3.1415926f / 12;
+			cube1->transform->Rotation.angle += 3.1415926f / 211;
+			cube2->transform->Rotation.angle += 3.1415926f / 107;
+			cube3->transform->Rotation.angle += 3.1415926f / 41;
+			cube4->transform->Rotation.angle += 3.1415926f / 107;
+			cube5->transform->Rotation.angle += 3.1415926f / 41;
 			StartRender();
 			for (list<Model*>::iterator now = ModelList.begin();now != ModelList.end();++now) {
 				CurrentModel = *now;

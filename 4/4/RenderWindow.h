@@ -1,5 +1,6 @@
 #pragma once
 #include <Windows.h>
+#include <bitset>
 #include "4.h"
 namespace RenderWindow {
 	HDC hdc;
@@ -12,6 +13,9 @@ namespace RenderWindow {
 	WNDCLASS wndclass;
 	bool init = false;
 	Render::Renderer rend;
+	byte mbmp[ScreenWidth * ScreenHeight * 3];
+	BITMAPINFO bmpinfo;
+	int c = 0;
 
 	LRESULT CALLBACK Wndproc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
 		switch (message) {
@@ -22,11 +26,35 @@ namespace RenderWindow {
 				memhdc = CreateCompatibleDC(hdc);
 				bmp = CreateCompatibleBitmap(hdc, ScreenWidth, ScreenHeight);
 				SelectObject(memhdc, bmp);
+				/*fh.bfType = 0x4D42;
+				fh.bfSize = 54 + ScreenWidth * ScreenHeight * 4;
+				fh.bfReserved1 = 0;
+				fh.bfReserved2 = 0;
+				fh.bfOffBits = 54;*/
+				bmpinfo.bmiHeader.biSize = 40;
+				bmpinfo.bmiHeader.biWidth = ScreenWidth;
+				bmpinfo.bmiHeader.biHeight = ScreenHeight;
+				bmpinfo.bmiHeader.biPlanes = 1;
+				bmpinfo.bmiHeader.biBitCount = 24;
+				bmpinfo.bmiHeader.biCompression = BI_RGB;
+				bmpinfo.bmiHeader.biSizeImage = 0;
+				bmpinfo.bmiHeader.biXPelsPerMeter = 0;
+				bmpinfo.bmiHeader.biYPelsPerMeter = 0;
+				bmpinfo.bmiHeader.biClrUsed = 256 * 256 * 256;
+				bmpinfo.bmiHeader.biClrImportant = 0;
+
 					for (int i = 0;i < ScreenWidth;i++)
 						for (int j = 0;j < ScreenHeight;j++) {
 							Render::Color col = Render::Color(rend.Output[i][j]);
-							SetPixel(memhdc, i, j, RGB(col.r, col.g, col.b));
+							//SetPixel(memhdc, i, j, RGB(col.r, col.g, col.b));
+							mbmp[3 * ((ScreenWidth - i - 1) + (ScreenHeight - j - 1) * ScreenWidth) + 2] = col.r;
+							mbmp[3 * ((ScreenWidth - i - 1) + (ScreenHeight - j - 1) * ScreenWidth) + 1] = col.g;
+							mbmp[3 * ((ScreenWidth - i - 1) + (ScreenHeight - j - 1) * ScreenWidth) + 0] = col.b;
 						}
+					if (!(c = SetDIBitsToDevice(memhdc, 0, 0, ScreenWidth, ScreenHeight, 0, 0, 0, ScreenHeight, &mbmp, &bmpinfo, DIB_RGB_COLORS)))
+						cout << "Set DIB error !!!" << endl;
+					else
+						cout << c << endl;
 					pen = (HPEN)GetStockObject(BLACK_PEN);
 					SelectObject(memhdc, pen);
 					for (list<Render::ScreenLine>::iterator l = rend.LineList.begin();l != rend.LineList.end();++l) {
@@ -35,6 +63,19 @@ namespace RenderWindow {
 					}
 					DeleteObject(pen);
 					BitBlt(hdc, 0, 0, ScreenWidth, ScreenHeight, memhdc, 0, 0, SRCCOPY);
+				cout << "----------info" << endl;
+				cout << bmpinfo.bmiHeader.biSize << endl;
+				cout << bmpinfo.bmiHeader.biWidth << endl;
+				cout << bmpinfo.bmiHeader.biHeight << endl;
+				cout << bmpinfo.bmiHeader.biPlanes << endl;
+				cout << bmpinfo.bmiHeader.biBitCount << endl;
+				cout << bmpinfo.bmiHeader.biCompression << endl;
+				cout << bmpinfo.bmiHeader.biSizeImage << endl;
+				cout << bmpinfo.bmiHeader.biXPelsPerMeter << endl;
+				cout << bmpinfo.bmiHeader.biYPelsPerMeter << endl;
+				cout << bmpinfo.bmiHeader.biClrUsed << endl;
+				cout << bmpinfo.bmiHeader.biClrImportant << endl;
+
 				DeleteObject(bmp);
 				DeleteObject(memhdc);
 			EndPaint(hwnd, &ps);
