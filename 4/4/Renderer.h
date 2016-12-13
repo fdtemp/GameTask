@@ -275,21 +275,21 @@ namespace Render {
 				+ (CurrentPremitive->bv * c2) / sp2.z
 				+ (CurrentPremitive->cv * (1 - c1 - c2)) / sp3.z
 			)));
-			bp.worldpos.x = //fz * (
-				(CurrentPremitive->aw.x * c1) /// sp1.z
-				+ (CurrentPremitive->bw.x * c2) /// sp2.z
-				+ (CurrentPremitive->cw.x * (1 - c1 - c2)); /// sp3.z
-			//);
-			bp.worldpos.y = //fz * (
-				(CurrentPremitive->aw.y * c1)// / sp1.z
-				+ (CurrentPremitive->bw.y * c2)// / sp2.z
-				+ (CurrentPremitive->cw.y * (1 - c1 - c2));// / sp3.z
-			//);
-			bp.worldpos.z = //fz * (
-				(CurrentPremitive->aw.z * c1)// / sp1.z
-				+ (CurrentPremitive->bw.z * c2)// / sp2.z
-				+ (CurrentPremitive->cw.z * (1 - c1 - c2));// / sp3.z
-			//);
+			bp.worldpos.x = fz * (
+				(CurrentPremitive->aw.x * c1) / sp1.z
+				+ (CurrentPremitive->bw.x * c2) / sp2.z
+				+ (CurrentPremitive->cw.x * (1 - c1 - c2)) / sp3.z
+			);
+			bp.worldpos.y = fz * (
+				(CurrentPremitive->aw.y * c1) / sp1.z
+				+ (CurrentPremitive->bw.y * c2) / sp2.z
+				+ (CurrentPremitive->cw.y * (1 - c1 - c2)) / sp3.z
+			);
+			bp.worldpos.z = fz * (
+				(CurrentPremitive->aw.z * c1) / sp1.z
+				+ (CurrentPremitive->bw.z * c2) / sp2.z
+				+ (CurrentPremitive->cw.z * (1 - c1 - c2)) / sp3.z
+			);
 			bp.lightdirection = mLight->GetInputLight(bp.worldpos);
 			bp.viewdirection = mCamera->transform->Translation.sub(bp.worldpos);
 			bp.normaldirection = CurrentPremitive->normal;
